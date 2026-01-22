@@ -1,0 +1,18 @@
+package com.smart_ecomernce_api.smart_ecomernce_api.modules.order.dto;
+
+import com.smart_ecomernce_api.Smart_ecommerce_api.modules.order.entity.OrderStatus;
+import lombok.AllArgsConstructor;
+import lombok.Builder;
+import lombok.Data;
+import lombok.NoArgsConstructor;
+
+@Data
+@NoArgsConstructor
+@AllArgsConstructor
+@Builder
+public class OrderUpdateRequest {
+    private OrderStatus status;
+    private String trackingNumber;
+    private String carrier;
+    private String adminNotes;
+}
