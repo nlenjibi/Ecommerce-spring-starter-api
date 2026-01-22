@@ -1,0 +1,17 @@
+package com.smart_ecomernce_api.smart_ecomernce_api.graphql.input;
+
+import lombok.*;
+
+
+@AllArgsConstructor
+@NoArgsConstructor
+@Data
+@Getter
+@Setter
+public class PageInput {
+    private int page = 0;
+    private int size = 20;
+    private String sortBy = "id";
+    private SortDirection direction = SortDirection.ASC;
+
+}

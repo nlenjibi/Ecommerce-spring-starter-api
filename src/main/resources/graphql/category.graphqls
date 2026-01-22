@@ -1,0 +1,52 @@
+type Category {
+    id: ID!
+    name: String!
+    slug: String!
+    description: String
+    imageUrl: String
+    displayOrder: Int!
+    parent: Category
+    children: [Category!]!
+    level: Int!
+    isActive: Boolean!
+    createdAt: DateTime!
+    updatedAt: DateTime!
+}
+
+type CategoryPage {
+    content: [Category!]!
+    pageInfo: PageInfo!
+}
+
+input CategoryCreateInput {
+    name: String!
+    slug: String!
+    description: String
+    imageUrl: String
+    displayOrder: Int
+    parentId: ID
+}
+
+input CategoryUpdateInput {
+    name: String
+    slug: String
+    description: String
+    imageUrl: String
+    displayOrder: Int
+    parentId: ID
+}
+
+extend type Query {
+    category(id: ID!): Category
+    categoryBySlug(slug: String!): Category
+    categories(pagination: PageInput, isActive: Boolean): CategoryPage!
+    activeCategories: [Category!]!
+    rootCategories(includeChildren: Boolean): [Category!]!
+    categoryHierarchy: [Category!]!
+}
+
+extend type Mutation {
+    createCategory(input: CategoryCreateInput!): Category!
+    updateCategory(id: ID!, input: CategoryUpdateInput!): Category!
+    deleteCategory(id: ID!, reassignChildren: Boolean): Boolean!
+}

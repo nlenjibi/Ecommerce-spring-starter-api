@@ -1,0 +1,48 @@
+enum WishlistPriority {
+    HIGH
+    MEDIUM
+    LOW
+}
+
+type WishlistItem {
+    id: ID!
+    user: User!
+    product: Product!
+    priority: WishlistPriority!
+    createdAt: DateTime!
+}
+
+type WishlistSummary {
+    totalItems: Int!
+    totalValue: BigDecimal!
+}
+
+type WishlistItemPage {
+    content: [WishlistItem!]!
+    pageInfo: PageInfo!
+}
+
+input AddToWishlistInput {
+    productId: ID!
+    priority: WishlistPriority
+}
+
+input UpdateWishlistItemInput {
+    priority: WishlistPriority
+}
+
+extend type Query {
+    myWishlist: [WishlistItem!]!
+    myWishlistPaginated(pagination: PageInput): WishlistItemPage!
+    wishlistSummary: WishlistSummary!
+    isInWishlist(productId: ID!): Boolean!
+    wishlistItemsWithPriceDrops: [WishlistItem!]!
+}
+
+extend type Mutation {
+    addToWishlist(input: AddToWishlistInput!): WishlistItem!
+    updateWishlistItem(productId: ID!, input: UpdateWishlistItemInput!): WishlistItem!
+    removeFromWishlist(productId: ID!): Boolean!
+    clearWishlist: Boolean!
+    markWishlistItemPurchased(productId: ID!): WishlistItem!
+}

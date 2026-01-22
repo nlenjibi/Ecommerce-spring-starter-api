@@ -1,0 +1,89 @@
+enum InventoryStatus {
+    IN_STOCK
+    LOW_STOCK
+    OUT_OF_STOCK
+    BACKORDER
+    PRE_ORDER
+    DISCONTINUED
+}
+
+type Product {
+    id: ID!
+    name: String!
+    description: String
+    slug: String!
+    sku: String
+    price: BigDecimal!
+    discountPrice: BigDecimal
+    effectivePrice: BigDecimal!
+    stockQuantity: Int!
+    inventoryStatus: InventoryStatus!
+    imageUrl: String
+    featured: Boolean!
+    isNew: Boolean!
+    category: Category!
+    averageRating: Float
+    totalReviews: Int!
+    isActive: Boolean!
+    createdAt: DateTime!
+    updatedAt: DateTime!
+}
+
+type ProductPage {
+    content: [Product!]!
+    pageInfo: PageInfo!
+}
+
+input ProductCreateInput {
+    name: String!
+    slug: String!
+    price: BigDecimal!
+    stockQuantity: Int!
+    categoryId: ID!
+    description: String
+    sku: String
+    discountPrice: BigDecimal
+    imageUrl: String
+    featured: Boolean
+    isNew: Boolean
+}
+
+input ProductUpdateInput {
+    name: String
+    slug: String
+    price: BigDecimal
+    stockQuantity: Int
+    categoryId: ID
+    description: String
+    sku: String
+    discountPrice: BigDecimal
+    imageUrl: String
+    featured: Boolean
+    isNew: Boolean
+}
+
+input ProductFilterInput {
+    categoryId: ID
+    minPrice: BigDecimal
+    maxPrice: BigDecimal
+    search: String
+    featured: Boolean
+    isNew: Boolean
+    inStock: Boolean
+}
+
+extend type Query {
+    product(id: ID!): Product
+    productBySlug(slug: String!): Product
+    products(pagination: PageInput, filter: ProductFilterInput): ProductPage!
+    featuredProducts(pagination: PageInput): ProductPage!
+    productsByCategory(categoryId: ID!, pagination: PageInput): ProductPage!
+    searchProducts(search: String!, pagination: PageInput): ProductPage!
+}
+
+extend type Mutation {
+    createProduct(input: ProductCreateInput!): Product!
+    updateProduct(id: ID!, input: ProductUpdateInput!): Product!
+    deleteProduct(id: ID!): Boolean!
+    reduceStock(id: ID!, quantity: Int!): Product!
+}
