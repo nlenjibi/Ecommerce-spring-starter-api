@@ -1,0 +1,74 @@
+enum OrderStatus {
+    PENDING
+    CONFIRMED
+    PROCESSING
+    SHIPPED
+    DELIVERED
+    CANCELLED
+    REFUNDED
+}
+
+enum PaymentStatus {
+    PENDING
+    PAID
+    FAILED
+    REFUNDED
+}
+
+enum PaymentMethod {
+    CREDIT_CARD
+    DEBIT_CARD
+    PAYPAL
+    CASH_ON_DELIVERY
+}
+
+type Order {
+    id: ID!
+    orderNumber: String!
+    user: User!
+    status: OrderStatus!
+    orderDate: DateTime!
+    subtotal: BigDecimal!
+    totalAmount: BigDecimal!
+    paymentStatus: PaymentStatus!
+    createdAt: DateTime!
+}
+
+type OrderStats {
+    totalOrders: Int!
+    totalRevenue: BigDecimal!
+    averageOrderValue: BigDecimal!
+}
+
+type OrderPage {
+    content: [Order!]!
+    pageInfo: PageInfo!
+}
+
+input OrderCreateInput {
+    items: [OrderItemInput!]!
+    shippingCost: BigDecimal
+    paymentMethod: PaymentMethod
+}
+
+input OrderItemInput {
+    productId: ID!
+    quantity: Int!
+}
+
+extend type Query {
+    order(id: ID!): Order
+    orderByNumber(orderNumber: String!): Order
+    myOrders(pagination: PageInput): OrderPage!
+    allOrders(pagination: PageInput): OrderPage!
+    orderStatistics: OrderStats!
+}
+
+extend type Mutation {
+    createOrder(input: OrderCreateInput!): Order!
+    cancelOrder(id: ID!, reason: String!): Order!
+    confirmOrder(id: ID!): Order!
+    shipOrder(id: ID!, trackingNumber: String!, carrier: String): Order!
+    deliverOrder(id: ID!): Order!
+    refundOrder(id: ID!, amount: BigDecimal!, reason: String!): Order!
+}

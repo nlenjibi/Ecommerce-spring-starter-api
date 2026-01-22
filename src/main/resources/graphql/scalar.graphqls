@@ -1,0 +1,4 @@
+scalar DateTime
+scalar UUID
+scalar BigDecimal
+scalar Upload

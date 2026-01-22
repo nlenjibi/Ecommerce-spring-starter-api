@@ -1,0 +1,73 @@
+enum Role {
+    ADMIN
+    CUSTOMER
+    MERCHANT
+}
+
+type User {
+    id: ID!
+    email: String!
+    username: String!
+    firstName: String!
+    lastName: String!
+    fullName: String!
+    phoneNumber: String
+    role: Role!
+    isActive: Boolean!
+    createdAt: DateTime!
+    updatedAt: DateTime!
+}
+
+type UserPage {
+    content: [User!]!
+    pageInfo: PageInfo!
+}
+
+type Address {
+    id: ID!
+    street: String
+    city: String
+    zip: String
+    state: String
+    userId: ID!
+}
+
+type AdminDashboard {
+    totalUsers: Int!
+    totalProducts: Int!
+    totalOrders: Int!
+    totalRevenue: BigDecimal!
+    pendingOrders: Int!
+    lowStockProducts: Int!
+}
+
+input UserCreateInput {
+    email: String!
+    username: String!
+    password: String!
+    firstName: String!
+    lastName: String!
+    phoneNumber: String
+    role: Role!
+}
+
+input UserUpdateInput {
+    email: String
+    username: String
+    firstName: String
+    lastName: String
+    phoneNumber: String
+}
+
+extend type Query {
+    user(id: ID!): User
+    users(pagination: PageInput): UserPage!
+    currentUser: User
+    adminDashboard: AdminDashboard!
+}
+
+extend type Mutation {
+    createUser(input: UserCreateInput!): User!
+    updateUser(id: ID!, input: UserUpdateInput!): User!
+    deleteUser(id: ID!): Boolean!
+}

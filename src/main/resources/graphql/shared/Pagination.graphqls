@@ -1,0 +1,17 @@
+
+# Pagination Types
+type PageInfo {
+    totalElements: Int!
+    totalPages: Int!
+    currentPage: Int!
+    pageSize: Int!
+    hasNext: Boolean!
+    hasPrevious: Boolean!
+}
+
+input PageInput {
+    page: Int = 0
+    size: Int = 20
+    sortBy: String = "id"
+    direction: SortDirection = ASC
+}
