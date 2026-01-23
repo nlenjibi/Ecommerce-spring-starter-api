@@ -1,7 +1,8 @@
 package com.smart_ecomernce_api.smart_ecomernce_api.modules.product.dto;
 
 
-import com.smart_ecomernce_api.Smart_ecommerce_api.modules.product.entity.WishlistPriority;
+
+import com.smart_ecomernce_api.smart_ecomernce_api.modules.product.entity.WishlistPriority;
 import jakarta.validation.constraints.Min;
 import jakarta.validation.constraints.Positive;
 import jakarta.validation.constraints.Size;

@@ -2,6 +2,7 @@ package com.smart_ecomernce_api.smart_ecomernce_api.modules.product.dto;
 
 
 import com.fasterxml.jackson.annotation.JsonFormat;
+import com.smart_ecomernce_api.smart_ecomernce_api.validator.ValidPriceRange;
 import lombok.AllArgsConstructor;
 import lombok.Builder;
 import lombok.Data;
@@ -14,6 +15,7 @@ import java.time.LocalDateTime;
 @NoArgsConstructor
 @AllArgsConstructor
 @Builder
+@ValidPriceRange
 public class PriceDropNotificationDto {
 
     private Long wishlistItemId;

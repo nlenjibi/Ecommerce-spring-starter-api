@@ -1,6 +1,7 @@
 package com.smart_ecomernce_api.smart_ecomernce_api.validator;
 
-import com.smart_ecomernce_api.Smart_ecommerce_api.modules.category.repository.CategoryRepository;
+
+import com.smart_ecomernce_api.smart_ecomernce_api.modules.category.repository.CategoryRepository;
 import jakarta.validation.ConstraintValidator;
 import jakarta.validation.ConstraintValidatorContext;
 import org.springframework.beans.factory.annotation.Autowired;

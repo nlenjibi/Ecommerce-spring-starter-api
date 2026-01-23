@@ -1,5 +1,7 @@
 package com.smart_ecomernce_api.smart_ecomernce_api.modules.product.dto;
 
+
+import com.smart_ecomernce_api.smart_ecomernce_api.validator.ValidPriceRange;
 import jakarta.validation.constraints.*;
 import lombok.AllArgsConstructor;
 import lombok.Builder;
@@ -12,6 +14,8 @@ import java.math.BigDecimal;
 @NoArgsConstructor
 @AllArgsConstructor
 @Builder
+@ValidPriceRange
+
 public class ProductCreateRequest {
 
     @NotBlank(message = "Product name is required")

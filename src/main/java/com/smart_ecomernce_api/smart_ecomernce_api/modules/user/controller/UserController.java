@@ -1,12 +1,12 @@
 package com.smart_ecomernce_api.smart_ecomernce_api.modules.user.controller;
 
 
-import com.smart_ecomernce_api.Smart_ecommerce_api.common.response.ApiResponse;
-import com.smart_ecomernce_api.Smart_ecommerce_api.common.utils.SecurityUtils;
-import com.smart_ecomernce_api.Smart_ecommerce_api.modules.user.dto.UserCreateRequest;
-import com.smart_ecomernce_api.Smart_ecommerce_api.modules.user.dto.UserDto;
-import com.smart_ecomernce_api.Smart_ecommerce_api.modules.user.dto.UserUpdateRequest;
-import com.smart_ecomernce_api.Smart_ecommerce_api.modules.user.service.UserService;
+import com.smart_ecomernce_api.smart_ecomernce_api.common.response.ApiResponse;
+import com.smart_ecomernce_api.smart_ecomernce_api.common.utils.SecurityUtils;
+import com.smart_ecomernce_api.smart_ecomernce_api.modules.user.dto.UserCreateRequest;
+import com.smart_ecomernce_api.smart_ecomernce_api.modules.user.dto.UserDto;
+import com.smart_ecomernce_api.smart_ecomernce_api.modules.user.dto.UserUpdateRequest;
+import com.smart_ecomernce_api.smart_ecomernce_api.modules.user.service.UserService;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.Parameter;
 import io.swagger.v3.oas.annotations.tags.Tag;
@@ -76,7 +76,7 @@ public class UserController {
     @PostMapping
     @Operation(summary = "Create a new user")
     public ResponseEntity<ApiResponse<UserDto>> createUser(@Valid @RequestBody UserCreateRequest request,
-        UriComponentsBuilder uriBuilder) {
+                                                           UriComponentsBuilder uriBuilder) {
         // RegisterRequest is defined in modules.auth and used by the service
         UserDto created = userService.createUser(request);
         var uri = uriBuilder.path("/api/users/{id}").buildAndExpand(created.getId()).toUri();

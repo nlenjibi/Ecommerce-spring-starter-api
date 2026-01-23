@@ -1,9 +1,6 @@
 package com.smart_ecomernce_api.smart_ecomernce_api.modules.user.entity;
 
-import lombok.AllArgsConstructor;
-import lombok.Builder;
-import lombok.Data;
-import lombok.NoArgsConstructor;
+import lombok.*;
 
 import java.math.BigDecimal;
 
@@ -11,6 +8,8 @@ import java.math.BigDecimal;
 @Builder
 @NoArgsConstructor
 @AllArgsConstructor
+@Getter
+@Setter
 public class AdminDashboardDto {
     private Long totalUsers;
     private Long totalOrders;

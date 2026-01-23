@@ -1,7 +1,7 @@
 package com.smart_ecomernce_api.smart_ecomernce_api.modules.product.repository;
 
-import com.smart_ecomernce_api.Smart_ecommerce_api.modules.product.entity.InventoryStatus;
-import com.smart_ecomernce_api.Smart_ecommerce_api.modules.product.entity.Product;
+import com.smart_ecomernce_api.smart_ecomernce_api.modules.product.entity.InventoryStatus;
+import com.smart_ecomernce_api.smart_ecomernce_api.modules.product.entity.Product;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.jpa.repository.JpaRepository;

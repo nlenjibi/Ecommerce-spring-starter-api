@@ -1,6 +1,6 @@
 package com.smart_ecomernce_api.smart_ecomernce_api.modules.review.repository;
 
-import com.smart_ecomernce_api.Smart_ecommerce_api.modules.review.entity.Review;
+import com.smart_ecomernce_api.smart_ecomernce_api.modules.review.entity.Review;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.jpa.repository.JpaRepository;

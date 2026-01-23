@@ -1,6 +1,6 @@
 package com.smart_ecomernce_api.smart_ecomernce_api.modules.cart.dto;
 
-import com.smart_ecomernce_api.Smart_ecommerce_api.modules.product.dto.ProductResponse;
+import com.smart_ecomernce_api.smart_ecomernce_api.modules.product.dto.ProductResponse;
 import lombok.AllArgsConstructor;
 import lombok.Builder;
 import lombok.Data;

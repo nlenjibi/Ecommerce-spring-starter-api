@@ -1,9 +1,9 @@
 package com.smart_ecomernce_api.smart_ecomernce_api.modules.category.mapper;
 
-import com.smart_ecomernce_api.Smart_ecommerce_api.modules.category.dto.CategoryCreateRequest;
-import com.smart_ecomernce_api.Smart_ecommerce_api.modules.category.dto.CategoryResponse;
-import com.smart_ecomernce_api.Smart_ecommerce_api.modules.category.dto.CategoryUpdateRequest;
-import com.smart_ecomernce_api.Smart_ecommerce_api.modules.category.entity.Category;
+import com.smart_ecomernce_api.smart_ecomernce_api.modules.category.dto.CategoryCreateRequest;
+import com.smart_ecomernce_api.smart_ecomernce_api.modules.category.dto.CategoryResponse;
+import com.smart_ecomernce_api.smart_ecomernce_api.modules.category.dto.CategoryUpdateRequest;
+import com.smart_ecomernce_api.smart_ecomernce_api.modules.category.entity.Category;
 import org.mapstruct.*;
 
 import java.util.stream.Collectors;

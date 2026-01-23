@@ -1,9 +1,9 @@
 package com.smart_ecomernce_api.smart_ecomernce_api.modules.product.entity;
 
-import com.smart_ecomernce_api.Smart_ecommerce_api.common.base.BaseEntity;
-import com.smart_ecomernce_api.Smart_ecommerce_api.modules.category.entity.Category;
-import com.smart_ecomernce_api.Smart_ecommerce_api.modules.order.entity.OrderItem;
-import com.smart_ecomernce_api.Smart_ecommerce_api.validator.ValidPriceRange;
+import com.smart_ecomernce_api.smart_ecomernce_api.common.base.BaseEntity;
+import com.smart_ecomernce_api.smart_ecomernce_api.modules.category.entity.Category;
+import com.smart_ecomernce_api.smart_ecomernce_api.modules.order.entity.OrderItem;
+import com.smart_ecomernce_api.smart_ecomernce_api.validator.ValidPriceRange;
 import jakarta.persistence.*;
 import jakarta.validation.constraints.Min;
 import jakarta.validation.constraints.NotBlank;

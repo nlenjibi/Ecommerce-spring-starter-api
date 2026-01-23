@@ -1,7 +1,8 @@
 package com.smart_ecomernce_api.smart_ecomernce_api.modules.user.dto;
 
 import com.fasterxml.jackson.annotation.JsonFormat;
-import com.smart_ecomernce_api.Smart_ecommerce_api.modules.user.entity.Role;
+
+import com.smart_ecomernce_api.smart_ecomernce_api.modules.user.entity.Role;
 import lombok.*;
 
 import java.time.LocalDateTime;
@@ -10,6 +11,7 @@ import java.time.LocalDateTime;
 @AllArgsConstructor
 @NoArgsConstructor
 @Getter
+@Setter
 @Data
 public class UserDto {
     private Long id;

@@ -1,7 +1,7 @@
 package com.smart_ecomernce_api.smart_ecomernce_api.modules.cart.repository;
 
-import com.smart_ecomernce_api.Smart_ecommerce_api.modules.cart.entity.Cart;
-import com.smart_ecomernce_api.Smart_ecommerce_api.modules.cart.entity.CartStatus;
+import com.smart_ecomernce_api.smart_ecomernce_api.modules.cart.entity.Cart;
+import com.smart_ecomernce_api.smart_ecomernce_api.modules.cart.entity.CartStatus;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.Modifying;
 import org.springframework.data.jpa.repository.Query;

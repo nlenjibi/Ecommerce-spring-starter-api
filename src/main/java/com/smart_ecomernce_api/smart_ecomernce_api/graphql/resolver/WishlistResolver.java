@@ -1,12 +1,11 @@
 package com.smart_ecomernce_api.smart_ecomernce_api.graphql.resolver;
 
-import com.smart_ecomernce_api.Smart_ecommerce_api.graphql.input.PageInput;
-import com.smart_ecomernce_api.Smart_ecommerce_api.graphql.input.SortDirection;
-import com.smart_ecomernce_api.Smart_ecommerce_api.modules.product.dto.AddToWishlistRequest;
-import com.smart_ecomernce_api.Smart_ecommerce_api.modules.product.dto.UpdateWishlistItemRequest;
-import com.smart_ecomernce_api.Smart_ecommerce_api.modules.product.dto.WishlistItemDto;
-import com.smart_ecomernce_api.Smart_ecommerce_api.modules.product.dto.WishlistSummaryDto;
-import com.smart_ecomernce_api.Smart_ecommerce_api.modules.product.service.WishlistService;
+import com.smart_ecomernce_api.smart_ecomernce_api.graphql.input.*;
+import com.smart_ecomernce_api.smart_ecomernce_api.modules.product.dto.AddToWishlistRequest;
+import com.smart_ecomernce_api.smart_ecomernce_api.modules.product.dto.UpdateWishlistItemRequest;
+import com.smart_ecomernce_api.smart_ecomernce_api.modules.product.dto.WishlistItemDto;
+import com.smart_ecomernce_api.smart_ecomernce_api.modules.product.dto.WishlistSummaryDto;
+import com.smart_ecomernce_api.smart_ecomernce_api.modules.product.service.WishlistService;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.cache.annotation.CacheEvict;

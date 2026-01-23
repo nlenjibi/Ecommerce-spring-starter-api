@@ -1,6 +1,6 @@
 package com.smart_ecomernce_api.smart_ecomernce_api.modules.user.repository;
 
-import com.smart_ecomernce_api.Smart_ecommerce_api.modules.product.entity.WishlistItem;
+import com.smart_ecomernce_api.smart_ecomernce_api.modules.product.entity.WishlistItem;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.query.Param;

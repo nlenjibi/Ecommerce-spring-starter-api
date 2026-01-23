@@ -1,20 +1,20 @@
 package com.smart_ecomernce_api.smart_ecomernce_api.modules.product.service.impl;
 
 
-import com.smart_ecomernce_api.Smart_ecommerce_api.exception.DuplicateResourceException;
-import com.smart_ecomernce_api.Smart_ecommerce_api.exception.ResourceNotFoundException;
-import com.smart_ecomernce_api.Smart_ecommerce_api.modules.product.dto.AddToWishlistRequest;
-import com.smart_ecomernce_api.Smart_ecommerce_api.modules.product.dto.UpdateWishlistItemRequest;
-import com.smart_ecomernce_api.Smart_ecommerce_api.modules.product.dto.WishlistItemDto;
-import com.smart_ecomernce_api.Smart_ecommerce_api.modules.product.dto.WishlistSummaryDto;
-import com.smart_ecomernce_api.Smart_ecommerce_api.modules.product.entity.Product;
-import com.smart_ecomernce_api.Smart_ecommerce_api.modules.product.entity.WishlistItem;
-import com.smart_ecomernce_api.Smart_ecommerce_api.modules.product.repository.ProductRepository;
-import com.smart_ecomernce_api.Smart_ecommerce_api.modules.product.service.WishlistService;
-import com.smart_ecomernce_api.Smart_ecommerce_api.modules.user.entity.User;
-import com.smart_ecomernce_api.Smart_ecommerce_api.modules.user.mapper.WishlistMapper;
-import com.smart_ecomernce_api.Smart_ecommerce_api.modules.user.repository.UserRepository;
-import com.smart_ecomernce_api.Smart_ecommerce_api.modules.user.repository.WishlistRepository;
+import com.smart_ecomernce_api.smart_ecomernce_api.exception.DuplicateResourceException;
+import com.smart_ecomernce_api.smart_ecomernce_api.exception.ResourceNotFoundException;
+import com.smart_ecomernce_api.smart_ecomernce_api.modules.product.dto.AddToWishlistRequest;
+import com.smart_ecomernce_api.smart_ecomernce_api.modules.product.dto.UpdateWishlistItemRequest;
+import com.smart_ecomernce_api.smart_ecomernce_api.modules.product.dto.WishlistItemDto;
+import com.smart_ecomernce_api.smart_ecomernce_api.modules.product.dto.WishlistSummaryDto;
+import com.smart_ecomernce_api.smart_ecomernce_api.modules.product.entity.Product;
+import com.smart_ecomernce_api.smart_ecomernce_api.modules.product.entity.WishlistItem;
+import com.smart_ecomernce_api.smart_ecomernce_api.modules.product.mapper.WishlistMapper;
+import com.smart_ecomernce_api.smart_ecomernce_api.modules.product.repository.ProductRepository;
+import com.smart_ecomernce_api.smart_ecomernce_api.modules.product.service.WishlistService;
+import com.smart_ecomernce_api.smart_ecomernce_api.modules.user.entity.User;
+import com.smart_ecomernce_api.smart_ecomernce_api.modules.user.repository.UserRepository;
+import com.smart_ecomernce_api.smart_ecomernce_api.modules.user.repository.WishlistRepository;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.cache.annotation.CacheEvict;

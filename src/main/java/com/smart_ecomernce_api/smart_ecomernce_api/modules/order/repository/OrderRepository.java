@@ -1,8 +1,8 @@
 package com.smart_ecomernce_api.smart_ecomernce_api.modules.order.repository;
 
-import com.smart_ecomernce_api.Smart_ecommerce_api.modules.order.entity.Order;
-import com.smart_ecomernce_api.Smart_ecommerce_api.modules.order.entity.OrderStatus;
-import com.smart_ecomernce_api.Smart_ecommerce_api.modules.order.entity.PaymentStatus;
+import com.smart_ecomernce_api.smart_ecomernce_api.modules.order.entity.Order;
+import com.smart_ecomernce_api.smart_ecomernce_api.modules.order.entity.OrderStatus;
+import com.smart_ecomernce_api.smart_ecomernce_api.modules.order.entity.PaymentStatus;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.jpa.repository.JpaRepository;

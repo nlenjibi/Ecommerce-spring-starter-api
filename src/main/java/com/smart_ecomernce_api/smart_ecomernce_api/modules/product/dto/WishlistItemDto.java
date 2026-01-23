@@ -3,7 +3,7 @@ package com.smart_ecomernce_api.smart_ecomernce_api.modules.product.dto;
 
 import com.fasterxml.jackson.annotation.JsonFormat;
 import com.fasterxml.jackson.annotation.JsonInclude;
-import com.smart_ecomernce_api.Smart_ecommerce_api.modules.product.entity.WishlistPriority;
+import com.smart_ecomernce_api.smart_ecomernce_api.modules.product.entity.WishlistPriority;
 import lombok.AllArgsConstructor;
 import lombok.Builder;
 import lombok.Data;

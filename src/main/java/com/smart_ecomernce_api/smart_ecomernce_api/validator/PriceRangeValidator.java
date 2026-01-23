@@ -1,6 +1,6 @@
 package com.smart_ecomernce_api.smart_ecomernce_api.validator;
 
-import com.smart_ecomernce_api.Smart_ecommerce_api.modules.product.entity.Product;
+import com.smart_ecomernce_api.smart_ecomernce_api.modules.product.entity.Product;
 import jakarta.validation.ConstraintValidator;
 import jakarta.validation.ConstraintValidatorContext;
 

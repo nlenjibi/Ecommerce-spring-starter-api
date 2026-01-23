@@ -1,6 +1,6 @@
 package com.smart_ecomernce_api.smart_ecomernce_api.modules.user.service;
 
-import com.smart_ecomernce_api.Smart_ecommerce_api.modules.user.entity.AdminDashboardDto;
+import com.smart_ecomernce_api.smart_ecomernce_api.modules.user.entity.AdminDashboardDto;
 
 
 

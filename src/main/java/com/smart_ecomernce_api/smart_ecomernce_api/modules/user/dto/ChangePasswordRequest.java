@@ -1,7 +1,12 @@
 package com.smart_ecomernce_api.smart_ecomernce_api.modules.user.dto;
 
-import lombok.Data;
+import lombok.*;
 
+@AllArgsConstructor
+@NoArgsConstructor
+@Builder
+@Getter
+@Setter
 @Data
 public class ChangePasswordRequest {
     private String oldPassword;

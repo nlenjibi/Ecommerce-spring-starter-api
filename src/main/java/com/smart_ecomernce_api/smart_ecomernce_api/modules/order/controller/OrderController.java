@@ -1,13 +1,14 @@
 package com.smart_ecomernce_api.smart_ecomernce_api.modules.order.controller;
 
-import com.smart_ecomernce_api.Smart_ecommerce_api.common.response.ApiResponse;
-import com.smart_ecomernce_api.Smart_ecommerce_api.common.response.PaginatedResponse;
-import com.smart_ecomernce_api.Smart_ecommerce_api.modules.order.dto.OrderCreateRequest;
-import com.smart_ecomernce_api.Smart_ecommerce_api.modules.order.dto.OrderResponse;
-import com.smart_ecomernce_api.Smart_ecommerce_api.modules.order.dto.OrderStatsResponse;
-import com.smart_ecomernce_api.Smart_ecommerce_api.modules.order.dto.OrderUpdateRequest;
-import com.smart_ecomernce_api.Smart_ecommerce_api.modules.order.entity.OrderStatus;
-import com.smart_ecomernce_api.Smart_ecommerce_api.modules.order.service.OrderService;
+
+import com.smart_ecomernce_api.smart_ecomernce_api.common.response.ApiResponse;
+import com.smart_ecomernce_api.smart_ecomernce_api.common.response.PaginatedResponse;
+import com.smart_ecomernce_api.smart_ecomernce_api.modules.order.dto.OrderCreateRequest;
+import com.smart_ecomernce_api.smart_ecomernce_api.modules.order.dto.OrderResponse;
+import com.smart_ecomernce_api.smart_ecomernce_api.modules.order.dto.OrderStatsResponse;
+import com.smart_ecomernce_api.smart_ecomernce_api.modules.order.dto.OrderUpdateRequest;
+import com.smart_ecomernce_api.smart_ecomernce_api.modules.order.entity.OrderStatus;
+import com.smart_ecomernce_api.smart_ecomernce_api.modules.order.service.OrderService;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.security.SecurityRequirement;
 import io.swagger.v3.oas.annotations.tags.Tag;
@@ -121,7 +122,7 @@ Long userId    ) {
     }
 
     @GetMapping("/admin/status/{status}")
-//    @PreAuthorize("hasRole('ADMIN')")
+
     @Operation(summary = "Get orders by status (Admin)")
     public ResponseEntity<ApiResponse<PaginatedResponse<OrderResponse>>> getOrdersByStatus(
             @PathVariable OrderStatus status,
@@ -145,7 +146,7 @@ Long userId    ) {
     }
 
     @PutMapping("/admin/{id}/confirm")
-//    @PreAuthorize("hasRole('ADMIN')")
+
     @Operation(summary = "Confirm order (Admin)")
     public ResponseEntity<ApiResponse<OrderResponse>> confirmOrder(@PathVariable Long id) {
         OrderResponse response = orderService.confirmOrder(id);
@@ -153,7 +154,6 @@ Long userId    ) {
     }
 
     @PutMapping("/admin/{id}/ship")
-//    @PreAuthorize("hasRole('ADMIN')")
     @Operation(summary = "Ship order (Admin)")
     public ResponseEntity<ApiResponse<OrderResponse>> shipOrder(
             @PathVariable Long id,
@@ -173,7 +173,6 @@ Long userId    ) {
     }
 
     @PutMapping("/admin/{id}/refund")
-//    @PreAuthorize("hasRole('ADMIN')")
     @Operation(summary = "Refund order (Admin)")
     public ResponseEntity<ApiResponse<OrderResponse>> refundOrder(
             @PathVariable Long id,
@@ -185,7 +184,6 @@ Long userId    ) {
     }
 
     @PutMapping("/admin/{id}/payment-status")
-//    @PreAuthorize("hasRole('ADMIN')")
     @Operation(summary = "Update payment status (Admin)")
     public ResponseEntity<ApiResponse<OrderResponse>> updatePaymentStatus(
             @PathVariable Long id,
@@ -196,7 +194,7 @@ Long userId    ) {
     }
 
     @GetMapping("/admin/statistics")
-//    @PreAuthorize("hasRole('ADMIN')")
+
     @Operation(summary = "Get order statistics (Admin)")
     public ResponseEntity<ApiResponse<OrderStatsResponse>> getStatistics() {
         OrderStatsResponse stats = orderService.getOrderStatistics();

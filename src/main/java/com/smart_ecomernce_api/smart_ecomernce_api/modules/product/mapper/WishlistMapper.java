@@ -1,8 +1,9 @@
-package com.smart_ecomernce_api.smart_ecomernce_api.modules.user.mapper;
+package com.smart_ecomernce_api.smart_ecomernce_api.modules.product.mapper;
 
 
-import com.smart_ecomernce_api.Smart_ecommerce_api.modules.product.dto.WishlistItemDto;
-import com.smart_ecomernce_api.Smart_ecommerce_api.modules.product.entity.WishlistItem;
+import com.smart_ecomernce_api.smart_ecomernce_api.modules.product.dto.WishlistItemDto;
+import com.smart_ecomernce_api.smart_ecomernce_api.modules.product.entity.Product;
+import com.smart_ecomernce_api.smart_ecomernce_api.modules.product.entity.WishlistItem;
 import org.mapstruct.Mapper;
 import org.mapstruct.Mapping;
 import org.mapstruct.Named;
@@ -23,7 +24,7 @@ public interface WishlistMapper {
 
     @Named("toProductSummary")
     default WishlistItemDto.ProductSummary toProductSummary(
-            com.smart_ecomernce_api.Smart_ecommerce_api.modules.product.entity.Product product) {
+            Product product) {
         if (product == null) {
             return null;
         }

@@ -1,9 +1,9 @@
 package com.smart_ecomernce_api.smart_ecomernce_api.modules.review.mapper;
 
-import com.smart_ecomernce_api.Smart_ecommerce_api.modules.review.dto.ReviewCreateRequest;
-import com.smart_ecomernce_api.Smart_ecommerce_api.modules.review.dto.ReviewResponse;
-import com.smart_ecomernce_api.Smart_ecommerce_api.modules.review.dto.ReviewUpdateRequest;
-import com.smart_ecomernce_api.Smart_ecommerce_api.modules.review.entity.Review;
+import com.smart_ecomernce_api.smart_ecomernce_api.modules.review.dto.ReviewCreateRequest;
+import com.smart_ecomernce_api.smart_ecomernce_api.modules.review.dto.ReviewResponse;
+import com.smart_ecomernce_api.smart_ecomernce_api.modules.review.dto.ReviewUpdateRequest;
+import com.smart_ecomernce_api.smart_ecomernce_api.modules.review.entity.Review;
 import org.mapstruct.*;
 
 @Mapper(componentModel = "spring", builder = @Builder(disableBuilder =false ))

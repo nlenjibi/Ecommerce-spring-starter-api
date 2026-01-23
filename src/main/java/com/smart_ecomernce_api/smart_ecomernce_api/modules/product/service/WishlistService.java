@@ -1,10 +1,10 @@
 package com.smart_ecomernce_api.smart_ecomernce_api.modules.product.service;
 
 
-import com.smart_ecomernce_api.Smart_ecommerce_api.modules.product.dto.AddToWishlistRequest;
-import com.smart_ecomernce_api.Smart_ecommerce_api.modules.product.dto.UpdateWishlistItemRequest;
-import com.smart_ecomernce_api.Smart_ecommerce_api.modules.product.dto.WishlistItemDto;
-import com.smart_ecomernce_api.Smart_ecommerce_api.modules.product.dto.WishlistSummaryDto;
+import com.smart_ecomernce_api.smart_ecomernce_api.modules.product.dto.AddToWishlistRequest;
+import com.smart_ecomernce_api.smart_ecomernce_api.modules.product.dto.UpdateWishlistItemRequest;
+import com.smart_ecomernce_api.smart_ecomernce_api.modules.product.dto.WishlistItemDto;
+import com.smart_ecomernce_api.smart_ecomernce_api.modules.product.dto.WishlistSummaryDto;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 

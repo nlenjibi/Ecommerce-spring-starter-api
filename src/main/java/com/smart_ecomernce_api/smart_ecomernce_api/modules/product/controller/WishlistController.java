@@ -1,11 +1,12 @@
 package com.smart_ecomernce_api.smart_ecomernce_api.modules.product.controller;
 
-import com.smart_ecomernce_api.Smart_ecommerce_api.common.response.ApiResponse;
-import com.smart_ecomernce_api.Smart_ecommerce_api.modules.product.dto.AddToWishlistRequest;
-import com.smart_ecomernce_api.Smart_ecommerce_api.modules.product.dto.UpdateWishlistItemRequest;
-import com.smart_ecomernce_api.Smart_ecommerce_api.modules.product.dto.WishlistItemDto;
-import com.smart_ecomernce_api.Smart_ecommerce_api.modules.product.dto.WishlistSummaryDto;
-import com.smart_ecomernce_api.Smart_ecommerce_api.modules.product.service.WishlistService;
+
+import com.smart_ecomernce_api.smart_ecomernce_api.common.response.ApiResponse;
+import com.smart_ecomernce_api.smart_ecomernce_api.modules.product.dto.AddToWishlistRequest;
+import com.smart_ecomernce_api.smart_ecomernce_api.modules.product.dto.UpdateWishlistItemRequest;
+import com.smart_ecomernce_api.smart_ecomernce_api.modules.product.dto.WishlistItemDto;
+import com.smart_ecomernce_api.smart_ecomernce_api.modules.product.dto.WishlistSummaryDto;
+import com.smart_ecomernce_api.smart_ecomernce_api.modules.product.service.WishlistService;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.Parameter;
 import io.swagger.v3.oas.annotations.tags.Tag;

@@ -1,11 +1,11 @@
 package com.smart_ecomernce_api.smart_ecomernce_api.modules.cart.mapper;
 
-import com.smart_ecomernce_api.Smart_ecommerce_api.modules.cart.dto.CartDto;
-import com.smart_ecomernce_api.Smart_ecommerce_api.modules.cart.dto.CartItemDto;
-import com.smart_ecomernce_api.Smart_ecommerce_api.modules.cart.entity.Cart;
-import com.smart_ecomernce_api.Smart_ecommerce_api.modules.cart.entity.CartItem;
-import com.smart_ecomernce_api.Smart_ecommerce_api.modules.product.dto.ProductResponse;
-import com.smart_ecomernce_api.Smart_ecommerce_api.modules.product.entity.Product;
+import com.smart_ecomernce_api.smart_ecomernce_api.modules.cart.dto.CartDto;
+import com.smart_ecomernce_api.smart_ecomernce_api.modules.cart.dto.CartItemDto;
+import com.smart_ecomernce_api.smart_ecomernce_api.modules.cart.entity.Cart;
+import com.smart_ecomernce_api.smart_ecomernce_api.modules.cart.entity.CartItem;
+import com.smart_ecomernce_api.smart_ecomernce_api.modules.product.dto.ProductResponse;
+import com.smart_ecomernce_api.smart_ecomernce_api.modules.product.entity.Product;
 import org.mapstruct.Mapper;
 import org.mapstruct.Mapping;
 import org.mapstruct.NullValuePropertyMappingStrategy;

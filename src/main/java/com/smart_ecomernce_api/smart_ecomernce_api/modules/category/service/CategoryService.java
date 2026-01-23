@@ -1,8 +1,8 @@
 package com.smart_ecomernce_api.smart_ecomernce_api.modules.category.service;
 
-import com.smart_ecomernce_api.Smart_ecommerce_api.modules.category.dto.CategoryCreateRequest;
-import com.smart_ecomernce_api.Smart_ecommerce_api.modules.category.dto.CategoryResponse;
-import com.smart_ecomernce_api.Smart_ecommerce_api.modules.category.dto.CategoryUpdateRequest;
+import com.smart_ecomernce_api.smart_ecomernce_api.modules.category.dto.CategoryCreateRequest;
+import com.smart_ecomernce_api.smart_ecomernce_api.modules.category.dto.CategoryResponse;
+import com.smart_ecomernce_api.smart_ecomernce_api.modules.category.dto.CategoryUpdateRequest;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 

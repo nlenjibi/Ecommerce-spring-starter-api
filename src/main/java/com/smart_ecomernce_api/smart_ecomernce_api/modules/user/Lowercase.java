@@ -1,6 +1,6 @@
 package com.smart_ecomernce_api.smart_ecomernce_api.modules.user;
 
-import com.smart_ecomernce_api.Smart_ecommerce_api.modules.user.LowercaseValidator;
+
 import jakarta.validation.Constraint;
 import jakarta.validation.Payload;
 

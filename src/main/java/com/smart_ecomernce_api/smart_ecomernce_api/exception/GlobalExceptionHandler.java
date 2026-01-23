@@ -1,8 +1,8 @@
 package com.smart_ecomernce_api.smart_ecomernce_api.exception;
 
 
-import com.smart_ecomernce_api.Smart_ecommerce_api.common.response.ApiResponse;
-import com.smart_ecomernce_api.Smart_ecommerce_api.common.response.ErrorResponse;
+import com.smart_ecomernce_api.smart_ecomernce_api.common.response.ApiResponse;
+import com.smart_ecomernce_api.smart_ecomernce_api.common.response.ErrorResponse;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.validation.ConstraintViolation;
 import jakarta.validation.ConstraintViolationException;

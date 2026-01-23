@@ -1,9 +1,9 @@
 package com.smart_ecomernce_api.smart_ecomernce_api.modules.order.mapper;
 
-import com.smart_ecomernce_api.Smart_ecommerce_api.modules.order.dto.OrderItemResponse;
-import com.smart_ecomernce_api.Smart_ecommerce_api.modules.order.dto.OrderResponse;
-import com.smart_ecomernce_api.Smart_ecommerce_api.modules.order.entity.Order;
-import com.smart_ecomernce_api.Smart_ecommerce_api.modules.order.entity.OrderItem;
+import com.smart_ecomernce_api.smart_ecomernce_api.modules.order.dto.OrderItemResponse;
+import com.smart_ecomernce_api.smart_ecomernce_api.modules.order.dto.OrderResponse;
+import com.smart_ecomernce_api.smart_ecomernce_api.modules.order.entity.Order;
+import com.smart_ecomernce_api.smart_ecomernce_api.modules.order.entity.OrderItem;
 import org.mapstruct.Builder;
 import org.mapstruct.Mapper;
 import org.mapstruct.Mapping;

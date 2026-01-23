@@ -1,7 +1,7 @@
 package com.smart_ecomernce_api.smart_ecomernce_api.modules.category.repository;
 
 
-import com.smart_ecomernce_api.Smart_ecommerce_api.modules.category.entity.Category;
+import com.smart_ecomernce_api.smart_ecomernce_api.modules.category.entity.Category;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.jpa.repository.JpaRepository;

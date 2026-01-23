@@ -1,10 +1,11 @@
 package com.smart_ecomernce_api.smart_ecomernce_api.modules.order.dto;
 
 
-import com.smart_ecomernce_api.Smart_ecommerce_api.modules.order.entity.OrderStatus;
-import com.smart_ecomernce_api.Smart_ecommerce_api.modules.order.entity.PaymentMethod;
-import com.smart_ecomernce_api.Smart_ecommerce_api.modules.order.entity.PaymentStatus;
-import com.smart_ecomernce_api.Smart_ecommerce_api.modules.order.entity.ShippingMethod;
+
+import com.smart_ecomernce_api.smart_ecomernce_api.modules.order.entity.OrderStatus;
+import com.smart_ecomernce_api.smart_ecomernce_api.modules.order.entity.PaymentMethod;
+import com.smart_ecomernce_api.smart_ecomernce_api.modules.order.entity.PaymentStatus;
+import com.smart_ecomernce_api.smart_ecomernce_api.modules.order.entity.ShippingMethod;
 import lombok.AllArgsConstructor;
 import lombok.Builder;
 import lombok.Data;

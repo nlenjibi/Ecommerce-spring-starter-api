@@ -1,9 +1,10 @@
 
 package com.smart_ecomernce_api.smart_ecomernce_api.modules.user.entity;
 
-import com.smart_ecomernce_api.Smart_ecommerce_api.common.base.BaseEntity;
-import com.smart_ecomernce_api.Smart_ecommerce_api.modules.order.entity.Order;
-import com.smart_ecomernce_api.Smart_ecommerce_api.modules.product.entity.WishlistItem;
+
+import com.smart_ecomernce_api.smart_ecomernce_api.common.base.BaseEntity;
+import com.smart_ecomernce_api.smart_ecomernce_api.modules.order.entity.Order;
+import com.smart_ecomernce_api.smart_ecomernce_api.modules.product.entity.WishlistItem;
 import jakarta.persistence.*;
 import jakarta.validation.constraints.NotBlank;
 import lombok.*;

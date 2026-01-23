@@ -1,7 +1,7 @@
 package com.smart_ecomernce_api.smart_ecomernce_api.modules.cart.entity;
 
 
-import com.smart_ecomernce_api.Smart_ecommerce_api.modules.product.entity.Product;
+import com.smart_ecomernce_api.smart_ecomernce_api.modules.product.entity.Product;
 import jakarta.persistence.*;
 import lombok.*;
 import org.hibernate.annotations.CreationTimestamp;
