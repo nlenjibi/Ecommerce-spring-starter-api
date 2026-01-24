@@ -1,5 +1,6 @@
 package com.smart_ecomernce_api.smart_ecomernce_api.modules.product.mapper;
 
+import com.smart_ecomernce_api.smart_ecomernce_api.graphql.dto.ProductDto;
 import com.smart_ecomernce_api.smart_ecomernce_api.modules.product.dto.ProductCreateRequest;
 import com.smart_ecomernce_api.smart_ecomernce_api.modules.product.dto.ProductResponse;
 import com.smart_ecomernce_api.smart_ecomernce_api.modules.product.dto.ProductUpdateRequest;
@@ -13,6 +14,7 @@ public interface ProductMapper {
     ProductResponse toDto(Product product);
 
     Product toEntity(ProductCreateRequest request);
+
 
     @Mapping(target = "id", ignore = true)
     void update(ProductUpdateRequest request, @MappingTarget Product product);

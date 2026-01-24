@@ -1,9 +1,6 @@
 package com.smart_ecomernce_api.smart_ecomernce_api.common.response;
 
-import lombok.AllArgsConstructor;
-import lombok.Builder;
-import lombok.Data;
-import lombok.NoArgsConstructor;
+import lombok.*;
 import org.springframework.data.domain.Page;
 
 import java.util.List;
@@ -12,6 +9,8 @@ import java.util.List;
 @NoArgsConstructor
 @AllArgsConstructor
 @Builder
+@Getter
+@Setter
 public class PaginatedResponse<T> {
     private List<T> content;
     private int page;

@@ -1,6 +1,8 @@
 package com.smart_ecomernce_api.smart_ecomernce_api.graphql.resolver;
 
 
+import com.smart_ecomernce_api.smart_ecomernce_api.common.response.PaginatedResponse;
+import com.smart_ecomernce_api.smart_ecomernce_api.graphql.dto.OrderResponseDto;
 import com.smart_ecomernce_api.smart_ecomernce_api.graphql.input.PageInput;
 import com.smart_ecomernce_api.smart_ecomernce_api.graphql.input.SortDirection;
 import com.smart_ecomernce_api.smart_ecomernce_api.modules.order.dto.OrderCreateRequest;
@@ -31,65 +33,66 @@ class OrderResolver {
     private final OrderService orderService;
 
     @QueryMapping
-    @Cacheable(value = "orders", key = "#id + '_' + #userId")
     public OrderResponse order(@Argument Long id, @ContextValue Long userId) {
         log.info("GraphQL Query: order(id: {})", id);
         return orderService.getOrderById(id, userId);
     }
 
     @QueryMapping
-    @Cacheable(value = "orders", key = "#orderNumber + '_' + #userId")
     public OrderResponse orderByNumber(@Argument String orderNumber, @ContextValue Long userId) {
         log.info("GraphQL Query: orderByNumber(orderNumber: {})", orderNumber);
         return orderService.getOrderByOrderNumber(orderNumber, userId);
     }
 
     @QueryMapping
-    @Cacheable(value = "orders", key = "'user_' + #userId + '_' + (#pagination==null?0:#pagination.page) + '_' + (#pagination==null?10:#pagination.size)")
-    public Page<OrderResponse> myOrders(@Argument PageInput pagination, @ContextValue Long userId) {
+    public OrderResponseDto myOrders(@Argument PageInput pagination, @ContextValue Long userId) {
         log.info("GraphQL Query: myOrders for user {}", userId);
         Pageable pageable = createPageable(pagination);
-        return orderService.getUserOrders(userId, pageable);
+        Page<OrderResponse> orders = orderService.getUserOrders(userId, pageable);
+        return OrderResponseDto.builder()
+                .content(orders.getContent())
+                .pageInfo(PaginatedResponse.from(orders))
+                .build();
+
     }
 
     @QueryMapping
-    @Cacheable(value = "orders", key = "'all_' + (#pagination==null?0:#pagination.page) + '_' + (#pagination==null?10:#pagination.size)")
-    public Page<OrderResponse> allOrders(@Argument PageInput pagination) {
+    public OrderResponseDto allOrders(@Argument PageInput pagination) {
         log.info("GraphQL Query: allOrders");
         Pageable pageable = createPageable(pagination);
-        return orderService.getAllOrders(pageable);
+        Page<OrderResponse> orders = orderService.getAllOrders(pageable);
+        return OrderResponseDto.builder()
+                .content(orders.getContent())
+                .pageInfo(PaginatedResponse.from(orders))
+                .build();
+
     }
 
     @QueryMapping
-    @Cacheable(value = "orders", key = "'stats'")
     public OrderStatsResponse orderStatistics() {
         log.info("GraphQL Query: orderStatistics");
         return orderService.getOrderStatistics();
     }
 
     @MutationMapping
-    @CacheEvict(value = "orders", allEntries = true)
     public OrderResponse createOrder(@Argument OrderCreateRequest input, @ContextValue Long userId) {
         log.info("GraphQL Mutation: createOrder for user {}", userId);
         return orderService.createOrder(input, userId);
     }
 
     @MutationMapping
-    @CacheEvict(value = "orders", allEntries = true)
     public OrderResponse cancelOrder(@Argument Long id, @Argument String reason, @ContextValue Long userId) {
         log.info("GraphQL Mutation: cancelOrder(id: {})", id);
         return orderService.cancelOrder(id, reason, userId);
     }
 
     @MutationMapping
-    @CacheEvict(value = "orders", allEntries = true)
     public OrderResponse confirmOrder(@Argument Long id) {
         log.info("GraphQL Mutation: confirmOrder(id: {})", id);
         return orderService.confirmOrder(id);
     }
 
     @MutationMapping
-    @CacheEvict(value = "orders", allEntries = true)
     public OrderResponse shipOrder(
             @Argument Long id,
             @Argument String trackingNumber,
@@ -99,14 +102,12 @@ class OrderResolver {
     }
 
     @MutationMapping
-    @CacheEvict(value = "orders", allEntries = true)
     public OrderResponse deliverOrder(@Argument Long id) {
         log.info("GraphQL Mutation: deliverOrder(id: {})", id);
         return orderService.deliverOrder(id);
     }
 
     @MutationMapping
-    @CacheEvict(value = "orders", allEntries = true)
     public OrderResponse refundOrder(
             @Argument Long id,
             @Argument BigDecimal amount,

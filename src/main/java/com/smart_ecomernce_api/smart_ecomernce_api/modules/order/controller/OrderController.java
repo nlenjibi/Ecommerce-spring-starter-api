@@ -108,7 +108,6 @@ Long userId    ) {
     }
 
     @GetMapping("/admin/all")
-//    @PreAuthorize("hasRole('ADMIN')")
     @Operation(summary = "Get all orders (Admin)")
     public ResponseEntity<ApiResponse<PaginatedResponse<OrderResponse>>> getAllOrders(
             @RequestParam(defaultValue = "0") int page,
@@ -135,7 +134,6 @@ Long userId    ) {
     }
 
     @PutMapping("/admin/{id}")
-//    @PreAuthorize("hasRole('ADMIN')")
     @Operation(summary = "Update order (Admin)")
     public ResponseEntity<ApiResponse<OrderResponse>> updateOrder(
             @PathVariable Long id,
@@ -165,7 +163,6 @@ Long userId    ) {
     }
 
     @PutMapping("/admin/{id}/deliver")
-//    @PreAuthorize("hasRole('ADMIN')")
     @Operation(summary = "Mark as delivered (Admin)")
     public ResponseEntity<ApiResponse<OrderResponse>> deliverOrder(@PathVariable Long id) {
         OrderResponse response = orderService.deliverOrder(id);

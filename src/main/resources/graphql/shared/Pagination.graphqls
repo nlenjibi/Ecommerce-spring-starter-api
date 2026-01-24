@@ -1,10 +1,12 @@
 
 # Pagination Types
 type PageInfo {
+    page: Int!
+    size: Int!
     totalElements: Int!
     totalPages: Int!
-    currentPage: Int!
-    pageSize: Int!
+    isFirst: Boolean!
+    isLast: Boolean!
     hasNext: Boolean!
     hasPrevious: Boolean!
 }

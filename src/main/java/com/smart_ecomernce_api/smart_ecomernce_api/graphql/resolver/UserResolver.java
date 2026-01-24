@@ -1,7 +1,10 @@
 package com.smart_ecomernce_api.smart_ecomernce_api.graphql.resolver;
 
+import com.smart_ecomernce_api.smart_ecomernce_api.common.response.PaginatedResponse;
+import com.smart_ecomernce_api.smart_ecomernce_api.graphql.dto.UserResponceDto;
 import com.smart_ecomernce_api.smart_ecomernce_api.graphql.input.PageInput;
 import com.smart_ecomernce_api.smart_ecomernce_api.graphql.input.SortDirection;
+import com.smart_ecomernce_api.smart_ecomernce_api.modules.product.dto.ProductResponse;
 import com.smart_ecomernce_api.smart_ecomernce_api.modules.user.dto.UserCreateRequest;
 import com.smart_ecomernce_api.smart_ecomernce_api.modules.user.dto.UserDto;
 import com.smart_ecomernce_api.smart_ecomernce_api.modules.user.dto.UserUpdateRequest;
@@ -31,50 +34,47 @@ public class UserResolver {
     private final AdminService adminService;
 
     @QueryMapping
-    @Cacheable(value = "users", key = "#id")
     public UserDto user(@Argument Long id) {
         log.info("GraphQL Query: user(id: {})", id);
         return userService.getUserById(id).orElse(null);
     }
 
     @QueryMapping
-    @Cacheable(value = "users", key = "'list_' + (#pagination==null?0:#pagination.page) + '_' + (#pagination==null?20:#pagination.size)")
-    public Page<UserDto> users(@Argument PageInput pagination) {
+    public UserResponceDto users(@Argument PageInput pagination) {
         log.info("GraphQL Query: users");
         Pageable pageable = createPageable(pagination);
-        return userService.getAllUsers(pageable);
+        Page<UserDto> productPage = userService.getAllUsers(pageable);
+        return UserResponceDto.builder()
+                .content(productPage.getContent())
+                .pageInfo(PaginatedResponse.from(productPage))
+                .build();
     }
 
     @QueryMapping
-    @Cacheable(value = "users", key = "'current_' + #userId")
     public UserDto currentUser(@ContextValue Long userId) {
         log.info("GraphQL Query: currentUser for user {}", userId);
         return userService.getUserById(userId).orElse(null);
     }
 
     @QueryMapping
-    @Cacheable(value = "users", key = "'admin_dashboard'")
     public AdminDashboardDto adminDashboard() {
         log.info("GraphQL Query: adminDashboard");
         return adminService.getDashboardStats();
     }
 
     @MutationMapping
-    @CacheEvict(value = "users", allEntries = true)
     public UserDto createUser(@Argument UserCreateRequest input) {
         log.info("GraphQL Mutation: createUser");
         return userService.createUser(input);
     }
 
     @MutationMapping
-    @CacheEvict(value = "users", allEntries = true)
     public UserDto updateUser(@Argument Long id, @Argument UserUpdateRequest input) {
         log.info("GraphQL Mutation: updateUser(id: {})", id);
         return userService.updateUser(id, input);
     }
 
     @MutationMapping
-    @CacheEvict(value = "users", allEntries = true)
     public Boolean deleteUser(@Argument Long id) {
         log.info("GraphQL Mutation: deleteUser(id: {})", id);
         userService.deleteUser(id);

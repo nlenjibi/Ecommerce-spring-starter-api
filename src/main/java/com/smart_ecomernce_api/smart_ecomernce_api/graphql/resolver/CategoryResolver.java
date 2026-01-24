@@ -1,6 +1,8 @@
 package com.smart_ecomernce_api.smart_ecomernce_api.graphql.resolver;
 
 
+import com.smart_ecomernce_api.smart_ecomernce_api.common.response.PaginatedResponse;
+import com.smart_ecomernce_api.smart_ecomernce_api.graphql.dto.CategoryResponseDto;
 import com.smart_ecomernce_api.smart_ecomernce_api.graphql.input.PageInput;
 import com.smart_ecomernce_api.smart_ecomernce_api.graphql.input.SortDirection;
 import com.smart_ecomernce_api.smart_ecomernce_api.modules.category.dto.CategoryCreateRequest;
@@ -30,66 +32,61 @@ public class CategoryResolver {
     private final CategoryService categoryService;
 
     @QueryMapping
-    @Cacheable(value = "categories", key = "#id")
     public CategoryResponse category(@Argument Long id) {
         log.info("GraphQL Query: category(id: {})", id);
         return categoryService.getCategoryById(id, true);
     }
 
     @QueryMapping
-    @Cacheable(value = "categories", key = "'slug_' + #slug")
     public CategoryResponse categoryBySlug(@Argument String slug) {
         log.info("GraphQL Query: categoryBySlug(slug: {})", slug);
         return categoryService.getCategoryBySlug(slug, true);
     }
 
     @QueryMapping
-    @Cacheable(value = "categories", key = "'list_' + (#pagination==null?0:#pagination.page) + '_' + (#pagination==null?20:#pagination.size) + '_' + (#isActive==null? 'all': #isActive)")
-    public Page<CategoryResponse> categories(
+    public CategoryResponseDto categories(
             @Argument PageInput pagination,
             @Argument Boolean isActive) {
         log.info("GraphQL Query: categories");
         Pageable pageable = createPageable(pagination);
-        return categoryService.getAllCategories(pageable, isActive);
+        Page<CategoryResponse> allCategories = categoryService.getAllCategories(pageable, isActive);
+        return CategoryResponseDto.builder()
+                .content(allCategories.getContent())
+                .pageInfo(PaginatedResponse.from(allCategories))
+                .build();
     }
 
     @QueryMapping
-    @Cacheable(value = "categories", key = "'active'")
     public List<CategoryResponse> activeCategories() {
         log.info("GraphQL Query: activeCategories");
         return categoryService.getAllActiveCategories();
     }
 
     @QueryMapping
-    @Cacheable(value = "categories", key = "'root_' + #includeChildren")
     public List<CategoryResponse> rootCategories(@Argument Boolean includeChildren) {
         log.info("GraphQL Query: rootCategories");
         return categoryService.getRootCategories(includeChildren != null ? includeChildren : false);
     }
 
     @QueryMapping
-    @Cacheable(value = "categories", key = "'hierarchy'")
     public List<CategoryResponse> categoryHierarchy() {
         log.info("GraphQL Query: categoryHierarchy");
         return categoryService.getFullHierarchy();
     }
 
     @MutationMapping
-    @CacheEvict(value = "categories", allEntries = true)
     public CategoryResponse createCategory(@Argument CategoryCreateRequest input) {
         log.info("GraphQL Mutation: createCategory");
         return categoryService.createCategory(input);
     }
 
     @MutationMapping
-    @CacheEvict(value = "categories", allEntries = true)
     public CategoryResponse updateCategory(@Argument Long id, @Argument CategoryUpdateRequest input) {
         log.info("GraphQL Mutation: updateCategory(id: {})", id);
         return categoryService.updateCategory(id, input);
     }
 
     @MutationMapping
-    @CacheEvict(value = "categories", allEntries = true)
     public Boolean deleteCategory(@Argument Long id, @Argument Boolean reassignChildren) {
         log.info("GraphQL Mutation: deleteCategory(id: {})", id);
         categoryService.deleteCategory(id, reassignChildren != null ? reassignChildren : true);

@@ -46,7 +46,7 @@ public class UserServiceImpl implements UserService {
 
 
         var user = userMapper.toEntity(request);
-        var hashPassword= SecurityUtils.hashPasswordWithSalt(user.getPassword(), SecurityUtils.generateSalt());
+        var hashPassword= SecurityUtils.hashPassword(user.getPassword());
         user.setPassword(hashPassword);
         user.setRole(Role.USER);
         userRepository.save(user);
@@ -112,7 +112,7 @@ public class UserServiceImpl implements UserService {
     public void changePassword(Long userId, ChangePasswordRequest request) {
         var user = userRepository.findById(userId).orElseThrow(() -> new ResourceNotFoundException("User not found with id: " + userId));
 //
-        if (!SecurityUtils.verifyPasswordWithSalt(request.getNewPassword(),SecurityUtils.generateSalt(),request.getOldPassword())) {
+        if (!SecurityUtils.verifyPassword(request.getNewPassword(),request.getOldPassword())) {
             throw new ResourceNotFoundException("Password does not match");
         }
         var hashPassword= SecurityUtils.hashPasswordWithSalt(request.getNewPassword(), SecurityUtils.generateSalt());

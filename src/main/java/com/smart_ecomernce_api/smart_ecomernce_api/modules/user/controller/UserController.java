@@ -2,7 +2,9 @@ package com.smart_ecomernce_api.smart_ecomernce_api.modules.user.controller;
 
 
 import com.smart_ecomernce_api.smart_ecomernce_api.common.response.ApiResponse;
+import com.smart_ecomernce_api.smart_ecomernce_api.common.response.PaginatedResponse;
 import com.smart_ecomernce_api.smart_ecomernce_api.common.utils.SecurityUtils;
+import com.smart_ecomernce_api.smart_ecomernce_api.modules.product.dto.ProductResponse;
 import com.smart_ecomernce_api.smart_ecomernce_api.modules.user.dto.UserCreateRequest;
 import com.smart_ecomernce_api.smart_ecomernce_api.modules.user.dto.UserDto;
 import com.smart_ecomernce_api.smart_ecomernce_api.modules.user.dto.UserUpdateRequest;
@@ -48,7 +50,7 @@ public class UserController {
 
     @GetMapping
     @Operation(summary = "Get all users with pagination")
-    public ResponseEntity<ApiResponse<Page<UserDto>>> getAllUsers(
+    public ResponseEntity<ApiResponse<PaginatedResponse<UserDto>>> getAllUsers(
             @Parameter(description = "Page number (0-based)", example = "0")
             @RequestParam(defaultValue = "0") int page,
 
@@ -65,9 +67,10 @@ public class UserController {
         Pageable pageable = PageRequest.of(page, size, Sort.by(direction, sortBy));
 
         Page<UserDto> users = userService.getAllUsers(pageable);
+        PaginatedResponse<UserDto> paginatedResponse = PaginatedResponse.from(users);
 
         return ResponseEntity.ok(
-                ApiResponse.success("Users fetched successfully", users)
+                ApiResponse.success("Users fetched successfully", paginatedResponse)
         );
     }
 
@@ -101,27 +104,5 @@ public class UserController {
     }
 
 
-private void sanitizeAndContainSqlInjection(Object request) {
-    if (request == null) return;
-    Class<?> cls = request.getClass();
-    Field[] fields = cls.getDeclaredFields();
-    for (Field field : fields) {
-        if (!field.getType().equals(String.class)) continue;
-        boolean accessible = field.canAccess(request);
-        try {
-            field.setAccessible(true);
-            String value = (String) field.get(request);
-            if (value == null) continue;
-            String sanitized = SecurityUtils.sanitizeInput(value);
-            if (SecurityUtils.containsSQLInjection(sanitized)) {
-                throw new IllegalArgumentException("Potential SQL injection detected in field: " + field.getName());
-            }
-            field.set(request, sanitized);
-        } catch (IllegalAccessException e) {
-            throw new RuntimeException("Failed to sanitize request field: " + field.getName(), e);
-        } finally {
-            field.setAccessible(accessible);
-        }
-    }
-}
+
 }

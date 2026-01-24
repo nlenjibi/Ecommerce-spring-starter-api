@@ -24,28 +24,24 @@ public class CartResolver {
     private final CartService cartService;
 
     @QueryMapping
-    @Cacheable(value = "carts", key = "#id")
     public CartDto cart(@Argument UUID id) {
         log.info("GraphQL Query: cart(id: {})", id);
         return cartService.getCart(id);
     }
 
     @MutationMapping
-    @CacheEvict(value = "carts", allEntries = true)
     public CartDto createCart() {
         log.info("GraphQL Mutation: createCart");
         return cartService.createCart();
     }
 
     @MutationMapping
-    @CacheEvict(value = "carts", key = "#cartId", condition = "#cartId != null")
     public CartItemDto addItemToCart(@Argument UUID cartId, @Argument AddItemToCartRequest input) {
         log.info("GraphQL Mutation: addItemToCart(cartId: {})", cartId);
         return cartService.addToCart(cartId, input);
     }
 
     @MutationMapping
-    @CacheEvict(value = "carts", key = "#cartId", condition = "#cartId != null")
     public CartItemDto updateCartItem(
             @Argument UUID cartId,
             @Argument Long productId,
@@ -55,7 +51,6 @@ public class CartResolver {
     }
 
     @MutationMapping
-    @CacheEvict(value = "carts", key = "#cartId", condition = "#cartId != null")
     public Boolean removeCartItem(@Argument UUID cartId, @Argument Long productId) {
         log.info("GraphQL Mutation: removeCartItem(cartId: {}, productId: {})", cartId, productId);
         cartService.removeItem(cartId, productId);
@@ -63,7 +58,6 @@ public class CartResolver {
     }
 
     @MutationMapping
-    @CacheEvict(value = "carts", key = "#cartId", condition = "#cartId != null")
     public Boolean clearCart(@Argument UUID cartId) {
         log.info("GraphQL Mutation: clearCart(cartId: {})", cartId);
         cartService.clearCart(cartId);

@@ -1,5 +1,8 @@
 package com.smart_ecomernce_api.smart_ecomernce_api.graphql.resolver;
 
+import com.smart_ecomernce_api.smart_ecomernce_api.common.response.PaginatedResponse;
+import com.smart_ecomernce_api.smart_ecomernce_api.graphql.dto.ProductDto;
+import com.smart_ecomernce_api.smart_ecomernce_api.graphql.dto.ReviewResponseDto;
 import com.smart_ecomernce_api.smart_ecomernce_api.graphql.input.PageInput;
 import com.smart_ecomernce_api.smart_ecomernce_api.graphql.input.SortDirection;
 import com.smart_ecomernce_api.smart_ecomernce_api.modules.review.dto.ReviewCreateRequest;
@@ -29,31 +32,31 @@ class ReviewResolver {
     private final ReviewService reviewService;
 
     @QueryMapping
-    @Cacheable(value = "reviews", key = "#productId + '_' + (#pagination == null ? 0 : #pagination.page) + '_' + (#pagination == null ? 10 : #pagination.size) + '_' + (#pagination == null ? 'createdAt' : #pagination.sortBy) + '_' + (#pagination == null ? 'DESC' : #pagination.direction)")
-    public Page<ReviewResponse> productReviews(
+    public ReviewResponseDto productReviews(
             @Argument Long productId,
             @Argument PageInput pagination) {
         log.info("GraphQL Query: productReviews(productId: {})", productId);
         Pageable pageable = createPageable(pagination);
-        return reviewService.getProductReviews(productId, pageable);
+        Page<ReviewResponse> productReviews = reviewService.getProductReviews(productId, pageable);
+        return ReviewResponseDto.builder()
+                .content(productReviews.getContent())
+                .pageInfo(PaginatedResponse.from(productReviews))
+                .build();
     }
 
     @QueryMapping
-    @Cacheable(value = "productRatingStats", key = "#productId")
     public ProductRatingStats productRatingStats(@Argument Long productId) {
         log.info("GraphQL Query: productRatingStats(productId: {})", productId);
         return reviewService.getProductRatingStats(productId);
     }
 
     @MutationMapping
-    @CacheEvict(value = {"reviews", "productRatingStats"}, allEntries = true)
     public ReviewResponse createReview(@Argument ReviewCreateRequest input, @ContextValue Long userId) {
         log.info("GraphQL Mutation: createReview for user {}", userId);
         return reviewService.createReview(input, userId);
     }
 
     @MutationMapping
-    @CacheEvict(value = {"reviews", "productRatingStats"}, allEntries = true)
     public ReviewResponse updateReview(
             @Argument Long id,
             @Argument ReviewUpdateRequest input,
@@ -63,7 +66,6 @@ class ReviewResolver {
     }
 
     @MutationMapping
-    @CacheEvict(value = {"reviews", "productRatingStats"}, allEntries = true)
     public Boolean deleteReview(@Argument Long id, @ContextValue Long userId) {
         log.info("GraphQL Mutation: deleteReview(id: {})", id);
         reviewService.deleteReview(id, userId);
@@ -71,7 +73,6 @@ class ReviewResolver {
     }
 
     @MutationMapping
-    @CacheEvict(value = {"reviews", "productRatingStats"}, allEntries = true)
     public ReviewResponse markReviewHelpful(@Argument Long id) {
         log.info("GraphQL Mutation: markReviewHelpful(id: {})", id);
         reviewService.markHelpful(id);

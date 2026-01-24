@@ -7,7 +7,7 @@ import java.lang.annotation.*;
 
 @Target({ ElementType.TYPE })
 @Retention(RetentionPolicy.RUNTIME)
-@Constraint(validatedBy = PriceRangeValidator.class)
+@Constraint(validatedBy = {PriceRangeValidator.class, ProductCreateRequestPriceRangeValidator.class})
 @Documented
 public @interface ValidPriceRange {
     String message() default "Discounted price must be less than original price";
