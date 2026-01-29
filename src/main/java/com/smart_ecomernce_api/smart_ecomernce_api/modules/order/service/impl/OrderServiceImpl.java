@@ -62,6 +62,10 @@ public class OrderServiceImpl implements OrderService {
             Product product = productRepository.findById(itemRequest.getProductId())
                     .orElseThrow(() -> ResourceNotFoundException.forResource("Product", itemRequest.getProductId()));
 
+            if (!product.getIsActive()) {
+                throw new ResourceNotFoundException("Product is not available");
+            }
+
             // Validate stock
             if (!product.canBeOrdered(itemRequest.getQuantity())) {
                 throw new InsufficientStockException(

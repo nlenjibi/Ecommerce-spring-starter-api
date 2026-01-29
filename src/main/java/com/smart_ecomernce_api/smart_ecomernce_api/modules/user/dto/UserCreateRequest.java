@@ -1,5 +1,6 @@
 package com.smart_ecomernce_api.smart_ecomernce_api.modules.user.dto;
 
+import com.smart_ecomernce_api.smart_ecomernce_api.validator.Lowercase;
 import jakarta.validation.constraints.Email;
 import jakarta.validation.constraints.NotBlank;
 import jakarta.validation.constraints.Pattern;
@@ -16,10 +17,12 @@ public class UserCreateRequest {
 
     @NotBlank(message = "Username is required")
     @Size(min = 3, max = 50, message = "Username must be between 3 and 50 characters")
+    @Lowercase
     private String username;
 
     @NotBlank(message = "Email is required")
     @Email(message = "Email should be valid")
+    @Lowercase
     private String email;
 
     @NotBlank(message = "Password is required")

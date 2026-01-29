@@ -20,18 +20,11 @@ public interface ReviewRepository extends JpaRepository<Review, Long> {
     // Find reviews by user
     Page<Review> findByUserId(Long userId, Pageable pageable);
 
-    // Find verified purchase reviews
-    Page<Review> findByProductIdAndVerifiedPurchaseTrueAndApprovedTrue(
-            Long productId, Pageable pageable);
 
-    // Find by rating
-    Page<Review> findByProductIdAndRatingAndApprovedTrue(
-            Long productId, Integer rating, Pageable pageable);
 
     // Check if user already reviewed product
     boolean existsByProductIdAndUserId(Long productId, Long userId);
 
-    Optional<Review> findByProductIdAndUserId(Long productId, Long userId);
 
     // Count reviews by product
     long countByProductIdAndApprovedTrue(Long productId);

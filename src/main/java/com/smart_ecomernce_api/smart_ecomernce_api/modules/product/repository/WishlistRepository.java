@@ -1,4 +1,4 @@
-package com.smart_ecomernce_api.smart_ecomernce_api.modules.user.repository;
+package com.smart_ecomernce_api.smart_ecomernce_api.modules.product.repository;
 
 import com.smart_ecomernce_api.smart_ecomernce_api.modules.product.entity.WishlistItem;
 import org.springframework.data.jpa.repository.JpaRepository;
@@ -57,23 +57,11 @@ public interface WishlistRepository extends JpaRepository<WishlistItem, Long> {
             "AND w.purchased = false")
     List<WishlistItem> findItemsNeedingPriceNotification(@Param("userId") Long userId);
 
-    /**
-     * Count wishlist items for user
-     */
-    long countByUserId(Long userId);
-
-    /**
-     * Count unpurchased items for user
-     */
-    long countByUserIdAndPurchasedFalse(Long userId);
 
     /**
      * Delete all wishlist items for a user
      */
     void deleteByUserId(Long userId);
 
-    /**
-     * Find public wishlist items for a user
-     */
-    List<WishlistItem> findByUserIdAndIsPublicTrue(Long userId);
+
 }

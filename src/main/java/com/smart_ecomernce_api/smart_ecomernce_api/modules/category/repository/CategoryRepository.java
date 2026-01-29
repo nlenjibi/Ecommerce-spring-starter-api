@@ -94,7 +94,6 @@ public interface CategoryRepository extends JpaRepository<Category, Long> {
     /**
      * Find categories by parent (including null for root categories)
      */
-    List<Category> findByParent(Category parent);
 
     /**
      * Check if category has children

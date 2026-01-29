@@ -24,6 +24,5 @@ public interface OrderMapper {
     @Mapping(target = "totalPrice", expression = "java(orderItem.getTotalPrice())")
     OrderItemResponse toItemDto(OrderItem orderItem);
 
-    List<OrderResponse> toDtoList(List<Order> orders);
-    List<OrderItemResponse> toItemDtoList(List<OrderItem> items);
+
 }

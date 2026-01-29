@@ -30,7 +30,6 @@ import java.math.BigDecimal;
 @RequiredArgsConstructor
 @Slf4j
 @Tag(name = "Orders", description = "Order management endpoints")
-@SecurityRequirement(name = "bearerAuth")
 public class OrderController {
 
     private final OrderService orderService;

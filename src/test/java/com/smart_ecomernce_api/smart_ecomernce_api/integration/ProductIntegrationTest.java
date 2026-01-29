@@ -9,7 +9,7 @@ import com.smart_ecomernce_api.smart_ecomernce_api.modules.product.dto.ProductRe
 import com.smart_ecomernce_api.smart_ecomernce_api.modules.product.entity.Product;
 import com.smart_ecomernce_api.smart_ecomernce_api.modules.product.repository.ProductRepository;
 import com.smart_ecomernce_api.smart_ecomernce_api.modules.review.repository.ReviewRepository;
-import com.smart_ecomernce_api.smart_ecomernce_api.modules.user.repository.WishlistRepository;
+import com.smart_ecomernce_api.smart_ecomernce_api.modules.product.repository.WishlistRepository;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;

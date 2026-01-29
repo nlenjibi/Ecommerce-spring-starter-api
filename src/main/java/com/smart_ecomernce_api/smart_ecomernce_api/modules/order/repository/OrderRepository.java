@@ -32,7 +32,6 @@ public interface OrderRepository extends JpaRepository<Order, Long> {
             Long userId, OrderStatus status, Pageable pageable);
 
     // Count user orders
-    long countByUserId(Long userId);
 
     // Count orders by status
     long countByStatus(OrderStatus status);
@@ -40,10 +39,6 @@ public interface OrderRepository extends JpaRepository<Order, Long> {
     // Find recent orders
     @Query("SELECT o FROM Order o WHERE o.orderDate >= :startDate ORDER BY o.orderDate DESC")
     List<Order> findRecentOrders(@Param("startDate") LocalDateTime startDate);
-
-    // Find orders by payment status
-    Page<Order> findByPaymentStatusOrderByOrderDateDesc(
-            PaymentStatus paymentStatus, Pageable pageable);
 
     // Find pending payments
     @Query("SELECT o FROM Order o WHERE o.paymentStatus = 'PENDING' " +

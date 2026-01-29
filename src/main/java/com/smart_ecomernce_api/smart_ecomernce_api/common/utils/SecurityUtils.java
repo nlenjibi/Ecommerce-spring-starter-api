@@ -89,42 +89,6 @@ public class SecurityUtils {
         return hashedInput.equals(hash);
     }
 
-    /**
-     * Verify password with salt
-     * @param password Plain text password
-     * @param salt Salt used in original hash
-     * @param hash Stored hash
-     * @return true if password matches
-     */
-    public static boolean verifyPasswordWithSalt(String password, String salt, String hash) {
-        String hashedInput = hashPasswordWithSalt(password, salt);
-        return hashedInput.equals(hash);
-    }
-
-    /**
-     * Sanitize input to prevent SQL injection
-     * @param input User input
-     * @return Sanitized input
-     */
-    public static String sanitizeInput(String input) {
-        if (input == null) return null;
-
-        // Remove potentially dangerous characters
-        return input.replaceAll("[';\"\\\\]", "").trim();
-    }
-
-    /**
-     * Validate session token
-     * @param token Session token
-     * @return true if valid format
-     */
-    public static boolean isValidToken(String token) {
-        if (token == null || token.isEmpty()) {
-            return false;
-        }
-        // Check token format and length
-        return token.length() >= 32 && token.matches("[A-Za-z0-9_-]+");
-    }
 
     /**
      * Convert byte array to hex string
@@ -141,43 +105,6 @@ public class SecurityUtils {
         return hexString.toString();
     }
 
-    /**
-     * Mask sensitive data for logging
-     * @param data Sensitive data
-     * @return Masked data
-     */
-    public static String maskSensitiveData(String data) {
-        if (data == null || data.length() <= 4) {
-            return "****";
-        }
-        return data.substring(0, 2) + "****" + data.substring(data.length() - 2);
-    }
 
-    /**
-     * Check if string contains SQL injection patterns
-     * @param input User input
-     * @return true if suspicious
-     */
-    public static boolean containsSQLInjection(String input) {
-        if (input == null) return false;
-
-        String lowerInput = input.toLowerCase();
-        String[] sqlKeywords = {"select", "insert", "update", "delete", "drop", "union", "exec", "--", "/*"};
-
-        for (String keyword : sqlKeywords) {
-            if (lowerInput.contains(keyword)) {
-                return true;
-            }
-        }
-        return false;
-    }
-
-    /**
-     * Generate secure session ID
-     * @return Session ID
-     */
-    public static String generateSessionId() {
-        return generateToken(32);
-    }
 }
 

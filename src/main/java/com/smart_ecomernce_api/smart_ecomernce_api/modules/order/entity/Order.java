@@ -449,6 +449,7 @@ public class Order extends BaseEntity {
 
     @PrePersist
     protected void onCreate() {
+        super.onCreate();
         if (orderNumber == null || orderNumber.isEmpty()) {
             orderNumber = generateOrderNumber();
         }

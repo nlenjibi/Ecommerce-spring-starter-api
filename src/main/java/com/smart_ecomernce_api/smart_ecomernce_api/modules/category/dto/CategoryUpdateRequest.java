@@ -3,6 +3,7 @@ package com.smart_ecomernce_api.smart_ecomernce_api.modules.category.dto;
 
 
 
+import com.smart_ecomernce_api.smart_ecomernce_api.validator.ValidCategoryHierarchy;
 import jakarta.validation.constraints.Min;
 import jakarta.validation.constraints.Size;
 import lombok.AllArgsConstructor;
@@ -25,6 +26,7 @@ public class CategoryUpdateRequest {
     @Size(max = 500, message = "Image URL must not exceed 500 characters")
     private String imageUrl;
 
+    @ValidCategoryHierarchy
     private Long parentId;
 
     @Min(value = 0, message = "Display order must be non-negative")

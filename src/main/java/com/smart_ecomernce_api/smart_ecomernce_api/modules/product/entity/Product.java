@@ -19,7 +19,7 @@ import java.util.List;
 
 @Entity
 @Table(
-        name = "product",
+        name = "products",
         indexes = {
                 @Index(name = "idx_product_slug", columnList = "slug"),
                 @Index(name = "idx_product_name", columnList = "name"),

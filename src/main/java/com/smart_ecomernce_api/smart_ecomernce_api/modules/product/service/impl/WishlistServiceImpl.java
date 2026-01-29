@@ -14,7 +14,7 @@ import com.smart_ecomernce_api.smart_ecomernce_api.modules.product.repository.Pr
 import com.smart_ecomernce_api.smart_ecomernce_api.modules.product.service.WishlistService;
 import com.smart_ecomernce_api.smart_ecomernce_api.modules.user.entity.User;
 import com.smart_ecomernce_api.smart_ecomernce_api.modules.user.repository.UserRepository;
-import com.smart_ecomernce_api.smart_ecomernce_api.modules.user.repository.WishlistRepository;
+import com.smart_ecomernce_api.smart_ecomernce_api.modules.product.repository.WishlistRepository;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.cache.annotation.CacheEvict;
@@ -49,10 +49,14 @@ public class WishlistServiceImpl implements WishlistService {
         User user = userRepository.findById(userId)
                 .orElseThrow(() -> new ResourceNotFoundException("User not found with id: " + userId));
 
-        // Validate product exists
+        // Validate product exists and is active
         Product product = productRepository.findById(request.getProductId())
                 .orElseThrow(() -> new ResourceNotFoundException(
                         "Product not found with id: " + request.getProductId()));
+
+        if (!product.getIsActive()) {
+            throw new ResourceNotFoundException("Product is not available");
+        }
 
         // Check if already in wishlist
         if (wishlistRepository.existsByUserIdAndProductId(userId, request.getProductId())) {

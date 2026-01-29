@@ -41,12 +41,6 @@ public class WishlistItem extends BaseEntity {
     @JoinColumn(name = "product_id", nullable = false)
     private Product product;
 
-    /**
-     * When the product was added to wishlist
-     */
-    @CreationTimestamp
-    @Column(name = "created_at", nullable = false, updatable = false)
-    private LocalDateTime createdAt;
 
     /**
      * User's personal notes about this product
@@ -150,6 +144,8 @@ public class WishlistItem extends BaseEntity {
 
     @PrePersist
     protected void onCreate() {
+        super.onCreate();
+
         if (priceWhenAdded == null && product != null) {
             priceWhenAdded = product.getEffectivePrice();
         }

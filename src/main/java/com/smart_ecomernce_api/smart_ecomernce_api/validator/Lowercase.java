@@ -1,4 +1,4 @@
-package com.smart_ecomernce_api.smart_ecomernce_api.modules.user;
+package com.smart_ecomernce_api.smart_ecomernce_api.validator;
 
 
 import jakarta.validation.Constraint;

@@ -86,24 +86,18 @@ public class OrderItem extends BaseEntity {
 
     @PrePersist
     protected void onCreate() {
+        super.onCreate();
+
         if (productName == null && product != null) {
             productName = product.getName();
         }
-    }
 
-
-    /**
-     * Get effective unit price (with discount)
-     */
-    public BigDecimal getEffectiveUnitPrice() {
-        if (discount != null && discount.compareTo(BigDecimal.ZERO) > 0) {
-            BigDecimal totalDiscount = discount.divide(
-                    BigDecimal.valueOf(quantity), 2, BigDecimal.ROUND_HALF_UP
-            );
-            return unitPrice.subtract(totalDiscount);
+        if (totalPrice == null && unitPrice != null && quantity != null) {
+            totalPrice = getTotalPrice();
         }
-        return unitPrice;
     }
+
+
 
 
 }
