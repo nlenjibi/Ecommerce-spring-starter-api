@@ -1,85 +1,197 @@
 # Smart E-Commerce System
 
-A comprehensive E-Commerce API built using Spring Boot, featuring both RESTful and GraphQL endpoints for managing products, users, orders, categories, reviews, carts, and wishlists. This project demonstrates advanced Spring Boot concepts including validation, exception handling, AOP, OpenAPI documentation, and performance optimization.
+## Table of Contents
+- [Project Overview](#project-overview)
+- [Features](#features)
+- [Technology Stack](#technology-stack)
+- [Architecture](#architecture)
+- [Installation](#installation)
+- [Configuration](#configuration)
+- [API Documentation](#api-documentation)
+- [Usage](#usage)
+- [Validation and Error Handling](#validation-and-error-handling)
+- [AOP Implementation](#aop-implementation)
+- [Performance Analysis](#performance-analysis)
+- [Testing](#testing)
+- [Project Structure](#project-structure)
+- [Contributing](#contributing)
+- [License](#license)
 
 ## Project Overview
 
-This phase of the Smart E-Commerce System transforms the existing database foundation into a web-based Spring Boot application and applies Spring Boot web development concepts to design and implement RESTful and GraphQL APIs that interact with the system's data while applying validation, exception handling, AOP, and OpenAPI documentation.
+This Smart E-Commerce System is a comprehensive web-based Spring Boot application that provides both RESTful and GraphQL APIs for managing e-commerce operations. The system implements modern software engineering practices including layered architecture, dependency injection, validation, exception handling, AOP, and comprehensive API documentation.
 
 ## Features
 
-- **RESTful APIs**: Complete CRUD operations for all entities with pagination, sorting, and filtering
-- **GraphQL Integration**: Flexible data fetching with queries and mutations
-- **Authentication & Authorization**: User management with role-based access
-- **Validation**: Bean Validation with custom validators
-- **Exception Handling**: Centralized error management with `@ControllerAdvice`
-- **AOP**: Logging, performance monitoring, and cross-cutting concerns
-- **Documentation**: OpenAPI/Swagger documentation
-- **Database**: JPA/Hibernate with Flyway migrations
-- **Profiles**: Environment-specific configurations (dev, test, prod)
+### Core Functionality
+- **User Management**: Create, read, update, and delete user accounts
+- **Product Catalog**: Comprehensive product management with categories, inventory, and pricing
+- **Category Management**: Hierarchical category organization for products
+- **RESTful APIs**: Standard REST endpoints following best practices
+- **GraphQL APIs**: Flexible queries and mutations for optimized data retrieval
+- **Validation**: Comprehensive input validation using Bean Validation
+- **Exception Handling**: Centralized error management with meaningful responses
+- **API Documentation**: Interactive OpenAPI/Swagger documentation
+- **AOP Integration**: Cross-cutting concerns like logging and monitoring
+- **Performance Optimization**: Efficient algorithms for sorting, searching, and pagination
 
-## Technologies Used
+### Advanced Features
+- **Environment-based Configuration**: Support for dev, test, and prod profiles
+- **Constructor-based Dependency Injection**: Following Spring best practices
+- **Pagination and Filtering**: Efficient data retrieval with customizable parameters
+- **Cross-cutting Concerns**: Centralized logging and performance monitoring
 
-| Component | Technology |
-|-----------|------------|
-| Framework | Spring Boot 3.5.9 |
-| Language | Java 21 |
-| Database | MySQL/PostgreSQL |
-| ORM | Spring Data JPA |
-| Migration | Flyway |
-| GraphQL | Spring GraphQL |
-| Caching | Redis |
-| Validation | Bean Validation |
-| Documentation | Springdoc OpenAPI |
-| Testing | Spring Boot Test |
-| Build Tool | Maven |
-| Mapping | MapStruct |
+## Technology Stack
 
-## Prerequisites
+| Technology | Version | Purpose |
+|------------|---------|---------|
+| Java | 21 | Primary programming language |
+| Spring Boot | 3.x | Application framework |
+| Spring Web | 3.x | Web application support |
+| Spring Data JPA | 3.x | Database access layer |
+| Spring GraphQL | 3.x | GraphQL support |
+| Springdoc OpenAPI | 2.x | API documentation |
+| Hibernate | 6.x | ORM framework |
+| Database | H2/PostgreSQL | Persistent storage |
+| Maven | 3.9+ | Build tool |
+| Docker | Latest | Containerization |
 
+## Architecture
+
+### Layered Architecture
+```
+┌─────────────────┐
+│   Controller    │ ← REST & GraphQL Endpoints
+├─────────────────┤
+│     Service     │ ← Business Logic
+├─────────────────┤
+│   Repository    │ ← Data Access Layer
+├─────────────────┤
+│    Database     │ ← Data Storage
+└─────────────────┘
+```
+
+### Modular Architecture
+```
+modules/
+├── auth/
+├── user/
+├── product/
+├── category/
+├── cart/
+├── order/
+├── payment/
+├── inventory/
+├── recommendation/
+├── notification/
+└── analytics/
+```
+
+### Design Patterns
+- **Dependency Injection**: Constructor-based injection for better testability
+- **Layered Architecture**: Separation of concerns between presentation, business, and data layers
+- **DTO Pattern**: Data Transfer Objects for API communication
+- **Repository Pattern**: Abstraction over data access operations
+- **AOP**: Cross-cutting concerns implementation
+
+## Installation
+
+### Prerequisites
 - Java 21 or higher
-- Maven 3.6+
-- MySQL or PostgreSQL
-- Redis (optional, for caching)
+- Maven 3.6+ or Gradle 7+
+- Docker (optional, for containerized deployment)
 
-## Installation & Setup
+### Steps
+1. Clone the repository:
+```bash
+git clone <repository-url>
+cd smart-ecommerce-system
+```
 
-1. **Clone the repository:**
-   ```bash
-   git clone <repository-url>
-   cd Ecommerce-spring-starter-api
-   ```
+2. Build the project:
+```bash
+mvn clean install
+```
 
-2. **Configure Database:**
-   - Create a database (e.g., `ecommerce_dev`)
-   - Update `src/main/resources/application-dev.yml` with your database credentials
-
-3. **Install Dependencies:**
-   ```bash
-   mvn clean install
-   ```
-
-4. **Run Database Migrations:**
-   ```bash
-   mvn flyway:migrate
-   ```
-
-5. **Run the Application:**
-   ```bash
-   mvn spring-boot:run
-   ```
-
-The application will start on `http://localhost:8080`
+3. Run the application:
+```bash
+mvn spring-boot:run
+```
 
 ## Configuration
 
-The application supports multiple profiles:
+### Environment Profiles
+The application supports multiple environments:
 
-- **dev**: Development environment with MySQL
-- **test**: Testing environment
-- **prod**: Production environment with PostgreSQL
+- **Development**: `dev` profile (default)
+- **Test**: `test` profile
+- **Production**: `prod` profile
 
-To activate a profile, set the `spring.profiles.active` property or use the `--spring.profiles.active=dev` command-line argument.
+### Configuration Files
+- `application.yml`: Base configuration
+- `application-dev.yml`: Development-specific settings
+- `application-test.yml`: Test environment settings
+- `application-prod.yml`: Production environment settings
+
+### Key Configuration Properties
+```yaml
+spring:
+  application:
+    name: smart-ecommerce
+  profiles:
+    active: dev
+  datasource:
+    url: jdbc:h2:mem:ecommerce_db
+    username: sa
+    password: 
+    driver-class-name: org.h2.Driver
+  jpa:
+    database-platform: org.hibernate.dialect.H2Dialect
+    hibernate:
+      ddl-auto: create-drop
+    show-sql: true
+    properties:
+      hibernate:
+        format_sql: true
+  h2:
+    console:
+      enabled: true
+  graphql:
+    graphiql:
+      enabled: true
+    path: /graphql
+
+server:
+  port: 8080
+
+logging:
+  level:
+    com.ecommerce.ecommerceapp: DEBUG
+    org.springframework: INFO
+    org.springframework.security: INFO
+
+springdoc:
+  swagger-ui:
+    path: /swagger-ui.html
+  api-docs:
+    path: /v3/api-docs
+```
+
+## API Documentation
+
+The system provides comprehensive API documentation through Springdoc OpenAPI:
+
+- **Swagger UI**: Available at `http://localhost:8080/swagger-ui.html`
+- **OpenAPI JSON**: Available at `http://localhost:8080/v3/api-docs`
+- **GraphQL Playground**: Available at `http://localhost:8080/graphiql`
+
+### Documentation Features
+- Interactive API testing interface
+- Request/response examples
+- Validation rule documentation
+- Error code explanations
+- Authentication requirements
+
 
 ### Environment Variables
 
@@ -92,32 +204,33 @@ DB_PASSWORD=your_password
 REDIS_HOST=localhost
 REDIS_PORT=6379
 ```
+## Usage
 
-## API Documentation
+### REST API Endpoints
 
-### Swagger UI
-Access the REST API documentation at: `http://localhost:8080/swagger-ui.html`
+#### User Management
+- `GET /api/users` - List all users with pagination
+- `GET /api/users/{id}` - Get user by ID
+- `POST /api/users` - Create new user
+- `PUT /api/users/{id}` - Update user
+- `DELETE /api/users/{id}` - Delete user
 
-### GraphiQL
-Access the GraphQL playground at: `http://localhost:8080/graphiql`
+#### Product Management
+- `GET /api/products` - List products with filtering, sorting, pagination
+- `GET /api/products/{id}` - Get product by ID
+- `POST /api/products` - Create new product
+- `PUT /api/products/{id}` - Update product
+- `DELETE /api/products/{id}` - Delete product
 
-## API Endpoints
+#### Category Management
+- `GET /api/categories` - List all categories
+- `GET /api/categories/{id}` - Get category by ID
+- `POST /api/categories` - Create new category
+- `PUT /api/categories/{id}` - Update category
+- `DELETE /api/categories/{id}` - Delete category
 
-### REST Endpoints
+### GraphQL Queries and Mutations
 
-#### Products
-- `GET /v1/products` - List products with filtering and pagination
-- `GET /v1/products/{id}` - Get product by ID
-- `POST /v1/products` - Create product
-- `PUT /v1/products/{id}` - Update product
-- `DELETE /v1/products/{id}` - Delete product
-
-#### Users
-- `GET /v1/users` - List users
-- `GET /v1/users/{id}` - Get user by ID
-- `POST /v1/users` - Create user
-- `PUT /v1/users/{id}` - Update user
-- `DELETE /v1/users/{id}` - Delete user
 
 #### Categories, Orders, Reviews, Cart, Wishlist
 Similar CRUD endpoints available for all entities.
@@ -171,74 +284,230 @@ query {
 **Create Product:**
 ```graphql
 mutation {
-  createProduct(input: {
-    name: "New Product"
-    price: 29.99
-    categoryId: 1
-  }) {
-    id
-    name
-    price
+    createProduct(input: {
+        name: "New Product"
+        price: 29.99
+        categoryId: 1
+    }) {
+        id
+        name
+        price
+    }
+}
+```
+
+## Validation and Error Handling
+
+### Validation Rules
+- Email format validation
+- Password strength requirements
+- Product price positive validation
+- Stock quantity validation
+- Required field validation
+- Custom business rule validation
+
+### Error Response Format
+```json
+{
+  "timestamp": "2023-12-01T10:30:00Z",
+  "status": 400,
+  "error": "Bad Request",
+  "message": "Validation failed",
+  "path": "/api/users",
+  "fieldErrors": {
+    "email": "Email format is invalid"
   }
+}
+```
+
+### Exception Handling
+- `@ControllerAdvice` for centralized error handling
+- Custom exception classes for business logic errors
+- HTTP status code mapping
+- Meaningful error messages for clients
+
+## AOP Implementation
+
+### Logging Aspect
+- Method execution logging
+- Parameter logging
+- Return value logging
+- Execution time measurement
+
+### Performance Monitoring Aspect
+- Method execution time tracking
+- Performance metrics collection
+- Slow method identification
+
+### Security Aspect
+- Access control validation
+- Authentication verification
+- Authorization checks
+
+### Example AOP Configuration
+```java
+@Aspect
+@Component
+public class LoggingAspect {
+    
+    @Around("within(com.ecommerce.ecommerceapp.modules..*)")
+    public Object logAround(ProceedingJoinPoint joinPoint) throws Throwable {
+        long startTime = System.currentTimeMillis();
+        
+        logger.info("Entering method: {} with arguments: {}", 
+                   joinPoint.getSignature().getDeclaringTypeName() + "." + joinPoint.getSignature().getName(),
+                   joinPoint.getArgs());
+
+        try {
+            Object result = joinPoint.proceed();
+            
+            long endTime = System.currentTimeMillis();
+            long duration = endTime - startTime;
+            
+            logger.info("Exiting method: {} with result: {}. Execution time: {} ms", 
+                       joinPoint.getSignature().getDeclaringTypeName() + "." + joinPoint.getSignature().getName(),
+                       result, duration);
+            
+            if (duration > 1000) { // Log if execution takes more than 1 second
+                logger.warn("Method {} took {} ms to execute", 
+                           joinPoint.getSignature().getName(), duration);
+            }
+            
+            return result;
+        } catch (Exception e) {
+            long endTime = System.currentTimeMillis();
+            long duration = endTime - startTime;
+            
+            logger.error("Exception in method: {} after {} ms. Exception: {}", 
+                        joinPoint.getSignature().getDeclaringTypeName() + "." + joinPoint.getSignature().getName(),
+                        duration, e.getMessage());
+            throw e;
+        }
+    }
 }
 ```
 
 ## Performance Analysis
 
-### REST API Performance
-
-**Advantages:**
-- Simple and straightforward implementation
-- HTTP caching support (ETags, Cache-Control headers)
-- Multiple endpoints allow for fine-grained caching strategies
-- Lower learning curve for clients
-- Better support for HTTP status codes and methods
-
-**Disadvantages:**
-- Over-fetching: Clients receive more data than needed
-- Under-fetching: Multiple requests required for related data
-- Versioning challenges with API evolution
-- Fixed response structure limits flexibility
-
-**Performance Metrics (Estimated):**
-- Response Time: 50-100ms for simple requests
-- Throughput: High for cached requests
-- Bandwidth: Higher due to potential over-fetching
-- N+1 Query Problem: Mitigated through proper DTO design
-
-### GraphQL API Performance
-
-**Advantages:**
-- Single endpoint reduces network overhead
-- Exact data fetching eliminates over/under-fetching
-- Flexible queries adapt to client needs
-- Strong typing with schema validation
-- Real-time capabilities with subscriptions
-
-**Disadvantages:**
-- Complexity in implementation and optimization
-- Potential N+1 query problem without proper batching
-- Caching challenges due to dynamic queries
-- Security concerns with complex queries
-
-**Performance Metrics (Estimated):**
-- Response Time: 30-80ms for optimized queries
-- Throughput: Variable based on query complexity
-- Bandwidth: Lower due to precise data fetching
-- Caching: Implemented with Redis for common queries
-
-### Comparative Analysis
+### REST vs GraphQL Performance Comparison
 
 | Aspect | REST | GraphQL |
 |--------|------|---------|
-| Data Fetching | Multiple endpoints | Single endpoint |
-| Over-fetching | Common | Eliminated |
-| Under-fetching | Common | Eliminated |
-| Caching | HTTP-level | Application-level |
-| Learning Curve | Low | Medium |
-| Flexibility | Low | High |
-| Performance | Good for simple ops | Better for complex data needs |
+| Data Fetching | Multiple endpoints | Single query for multiple entities |
+| Over-fetching | Common issue | Minimal over-fetching |
+| Network Requests | More requests for complex data | Fewer requests |
+| Caching | Standard HTTP caching | Query-specific caching |
+| Flexibility | Fixed response structure | Client-defined response |
+
+### Optimization Techniques Implemented
+- **Pagination**: Efficient data retrieval with page-based loading
+- **Sorting Algorithms**: Optimized sorting using efficient algorithms
+- **Search Algorithms**: Binary search and other efficient search methods
+- **Database Indexing**: Strategic indexing for query optimization
+- **Connection Pooling**: Efficient database connection management
+
+### Performance Metrics
+- Response time monitoring
+- Throughput measurement
+- Memory usage tracking
+- Database query optimization
+
+## Testing
+
+### Test Strategy
+- **Unit Tests**: Individual method and class testing
+- **Integration Tests**: Component interaction testing
+- **API Tests**: Endpoint functionality validation
+- **Performance Tests**: Load and stress testing
+
+### Testing Tools
+- JUnit 5 for unit testing
+- Mockito for mocking dependencies
+- REST Assured for API testing
+- GraphQL Test for GraphQL endpoint testing
+
+### Test Coverage
+- Minimum 80% code coverage requirement
+- Critical business logic 100% coverage
+- API endpoints comprehensive testing
+
+## Project Structure
+
+```
+smart-ecommerce/
+│
+├── src/
+│   ├── main/
+│   │   ├── java/com/company/ecommerce/
+│   │   │   ├── EcommerceApplication.java
+│   │   │   │
+│   │   │   ├── config/
+│   │   │   ├── security/
+│   │   │   ├── common/
+│   │   │   ├── modules/
+│   │   │   └── integration/
+│   │   │
+│   │   └── resources/
+│   │       ├── graphql/
+│   │       ├── application.yml
+│   │       ├── db/migration/
+│   │       └── templates/
+│   │
+│   └── test/
+│       └── java/com/company/ecommerce/
+│
+├── pom.xml
+└── README.md
+```
+
+## Running with Docker
+
+### Build and Run
+```bash
+# Build the application
+mvn clean install
+
+# Build and run with Docker Compose
+docker-compose -f docker/docker-compose.yml up --build
+```
+
+### Docker Services
+- **app**: Spring Boot application running on port 8080
+- **db**: PostgreSQL database running on port 5432
+
+## Contributing
+
+### Development Guidelines
+1. Follow the layered architecture pattern
+2. Use constructor-based dependency injection
+3. Implement proper validation and error handling
+4. Write comprehensive unit and integration tests
+5. Maintain API documentation with Springdoc OpenAPI
+6. Apply AOP for cross-cutting concerns
+7. Follow Java and Spring Boot best practices
+
+### Code Standards
+- Use meaningful variable and method names
+- Write clear and concise comments
+- Follow the Single Responsibility Principle
+- Implement proper exception handling
+- Use appropriate design patterns
+
+### Branching Strategy
+- `main`: Production-ready code
+- `develop`: Integration branch for features
+- `feature/*`: Feature development branches
+- `hotfix/*`: Urgent production fixes
 
 ## License
 
-This project is licensed under the MIT License - see the LICENSE file for details.
+This project is licensed under the MIT License - see the [LICENSE](LICENSE) file for details.
+
+## Acknowledgments
+
+- Spring Boot Framework
+- Spring GraphQL
+- Springdoc OpenAPI
+- Hibernate ORM
+- GraphQL Java
+- Various open-source libraries and tools
