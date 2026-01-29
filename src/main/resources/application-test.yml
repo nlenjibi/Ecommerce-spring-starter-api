@@ -3,14 +3,14 @@ spring:
     name: e-store
 
   datasource:
-    url: jdbc:postgresql://localhost:5432/ecommerce_dev
-    username: postgres
-    password: root
-    driver-class-name: org.postgresql.Driver
+    url: ${DATABASE_URL}
+    username: ${USER_NAME}
+    password: ${PASSWORD}
+    driver-class-name: ${DATABASE_DRIVER}
 
   jpa:
     hibernate:
-      ddl-auto: validate  # Only validate schema, don't auto-create
+      ddl-auto: update  # Only validate schema, don't auto-create
     show-sql: true
     open-in-view: false
     properties:
@@ -32,32 +32,7 @@ spring:
     placeholder-replacement: true
     placeholders:
       schema: public
-  # Redis Configuration
-  data:
-    redis:
-      host: localhost
-      port: 6379
-      timeout: 2000ms
-      lettuce:
-        pool:
-          max-active: 8
-          max-idle: 8
-          min-idle: 2
-          max-wait: -1ms
 
-  # Cache Configuration
-  cache:
-    type: none  # ⚠️ Should be "redis" if using Redis cache
-    redis:
-      time-to-live: 600000
-      cache-null-values: false
-      key-prefix: "ecommerce:"
-      use-key-prefix: true
-
-  # DISABLE Docker Compose Integration
-  docker:
-    compose:
-      enabled: false
 
   graphql:
     graphiql:

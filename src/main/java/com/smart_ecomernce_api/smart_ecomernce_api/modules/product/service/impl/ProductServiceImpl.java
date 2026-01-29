@@ -159,7 +159,7 @@ public class ProductServiceImpl implements ProductService {
     public ProductResponse getProductBySlug(String slug) {
         log.info("Fetching product by slug: {}", slug);
         Product product = productRepository.findBySlug(slug)
-                .orElseThrow(() -> ResourceNotFoundException.forResource("Product", slug));
+                .orElseThrow(() -> ResourceNotFoundException.forResource("Product Slug", slug));
         return productMapper.toDto(product);
     }
 

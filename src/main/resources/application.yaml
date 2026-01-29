@@ -5,9 +5,10 @@ spring:
     active: test
 
   datasource:
-    url: jdbc:mysql://localhost:3306/ecommerce_dev?createDatabaseIfNotExist=true
-    username: root
-    password:
+    url: ${DATABASE_URL}
+    username: ${USER_NAME}
+    password: ${PASSWORD}
+    driver-class-name: ${DATABASE_DRIVER}
 
   jpa:
     hibernate:

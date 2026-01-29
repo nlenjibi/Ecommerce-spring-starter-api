@@ -1,6 +1,5 @@
 package com.smart_ecomernce_api.smart_ecomernce_api.graphql.resolver;
 
-import com.smart_ecomernce_api.smart_ecomernce_api.common.response.ApiResponse;
 import com.smart_ecomernce_api.smart_ecomernce_api.common.response.PaginatedResponse;
 import com.smart_ecomernce_api.smart_ecomernce_api.graphql.dto.ProductDto;
 import com.smart_ecomernce_api.smart_ecomernce_api.graphql.input.PageInput;
@@ -9,12 +8,10 @@ import com.smart_ecomernce_api.smart_ecomernce_api.graphql.input.SortDirection;
 import com.smart_ecomernce_api.smart_ecomernce_api.modules.product.dto.ProductCreateRequest;
 import com.smart_ecomernce_api.smart_ecomernce_api.modules.product.dto.ProductResponse;
 import com.smart_ecomernce_api.smart_ecomernce_api.modules.product.dto.ProductUpdateRequest;
-import com.smart_ecomernce_api.smart_ecomernce_api.modules.product.entity.Product;
 import com.smart_ecomernce_api.smart_ecomernce_api.modules.product.mapper.ProductMapper;
 import com.smart_ecomernce_api.smart_ecomernce_api.modules.product.service.ProductService;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
-import org.springframework.cache.annotation.CacheEvict;
 import org.springframework.cache.annotation.Cacheable;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageRequest;
@@ -23,7 +20,6 @@ import org.springframework.data.domain.Sort;
 import org.springframework.graphql.data.method.annotation.Argument;
 import org.springframework.graphql.data.method.annotation.MutationMapping;
 import org.springframework.graphql.data.method.annotation.QueryMapping;
-import org.springframework.http.ResponseEntity;
 import org.springframework.stereotype.Controller;
 
 import java.math.BigDecimal;
@@ -34,10 +30,8 @@ import java.math.BigDecimal;
 public class ProductResolver {
 
     private final ProductService productService;
-    private final ProductMapper productMapper;
 
     @QueryMapping
-    @Cacheable(value = "product", key = "#id")
     public ProductResponse product(@Argument Long id) {
         log.info("GraphQL Query: product(id: {})", id);
         return productService.getProductById(id);
@@ -50,30 +44,30 @@ public class ProductResolver {
     }
 
    @QueryMapping
-public ProductDto products(
-        @Argument PageInput pagination,
-        @Argument ProductFilterInput filter) {
-    log.info("GraphQL Query: products with pagination and filters");
+    public ProductDto products(
+            @Argument PageInput pagination,
+            @Argument ProductFilterInput filter) {
+        log.info("GraphQL Query: products with pagination and filters");
 
-    Pageable pageable = createPageable(pagination);
-       Page<ProductResponse> productPage;
+        Pageable pageable = createPageable(pagination);
+           Page<ProductResponse> productPage;
 
-    if (filter != null && hasFilters(filter)) {
-         productPage = productService.advancedProductSearch(
-                filter.getCategoryId(),
-                filter.getMinPrice() != null ? filter.getMinPrice() : BigDecimal.ZERO,
-                filter.getMaxPrice() != null ? filter.getMaxPrice() : new BigDecimal("999999"),
-                filter.getSearch() != null ? filter.getSearch() : "",
-                pageable
-        );
-    }else {
-    productPage = productService.getAllProducts(pageable);
+        if (filter != null && hasFilters(filter)) {
+             productPage = productService.advancedProductSearch(
+                    filter.getCategoryId(),
+                    filter.getMinPrice() != null ? filter.getMinPrice() : BigDecimal.ZERO,
+                    filter.getMaxPrice() != null ? filter.getMaxPrice() : new BigDecimal("999999"),
+                    filter.getSearch() != null ? filter.getSearch() : "",
+                    pageable
+            );
+        }else {
+        productPage = productService.getAllProducts(pageable);
+        }
+           return  ProductDto.builder()
+                   .content(productPage.getContent())
+                   .pageInfo(PaginatedResponse.from(productPage))
+                   .build();
     }
-       return  ProductDto.builder()
-               .content(productPage.getContent())
-               .pageInfo(PaginatedResponse.from(productPage))
-               .build();
-}
 
     @QueryMapping
     public ProductDto featuredProducts(@Argument PageInput pagination) {

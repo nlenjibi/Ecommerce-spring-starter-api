@@ -15,7 +15,7 @@ import java.util.List;
 import java.util.Optional;
 
 @Repository
-public interface ProductRepository extends JpaRepository<Product, Long>, JpaSpecificationExecutor<Product> {
+public interface ProductRepository extends JpaRepository<Product, Long> {
     Optional<Product> findBySlug(String slug);
 
     Optional<Product> findBySku(String sku);
@@ -24,7 +24,6 @@ public interface ProductRepository extends JpaRepository<Product, Long>, JpaSpec
 
     Page<Product> findByFeaturedTrueAndIsActiveTrue(Pageable pageable);
 
-    List<Product> findByFeaturedTrue();
 
     /**
      * Find product by inventory status
