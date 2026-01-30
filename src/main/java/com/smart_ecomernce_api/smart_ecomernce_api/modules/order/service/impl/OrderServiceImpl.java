@@ -20,12 +20,15 @@ import lombok.extern.slf4j.Slf4j;
 import org.springframework.cache.annotation.CacheEvict;
 import org.springframework.cache.annotation.Cacheable;
 import org.springframework.data.domain.Page;
+import org.springframework.data.domain.PageImpl;
 import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.math.BigDecimal;
 import java.time.LocalDateTime;
+import java.util.List;
+import java.util.stream.Collectors;
 
 
 @Service
@@ -114,8 +117,8 @@ public class OrderServiceImpl implements OrderService {
     }
 
     @Override
-    @Transactional(readOnly = true)
     @Cacheable(value = "orders", key = "#id + '_' + #userId")
+    @Transactional(readOnly = true)
     public OrderResponse getOrderById(Long id, Long userId) {
         Order order = orderRepository.findById(id)
                 .orElseThrow(() -> ResourceNotFoundException.forResource("Order", id));
@@ -129,8 +132,8 @@ public class OrderServiceImpl implements OrderService {
     }
 
     @Override
-    @Transactional(readOnly = true)
     @Cacheable(value = "orders", key = "#orderNumber + '_' + #userId")
+    @Transactional(readOnly = true)
     public OrderResponse getOrderByOrderNumber(String orderNumber, Long userId) {
         Order order = orderRepository.findByOrderNumber(orderNumber)
                 .orElseThrow(() -> ResourceNotFoundException.forResource("Order not found: ",orderNumber));
@@ -144,39 +147,43 @@ public class OrderServiceImpl implements OrderService {
     }
 
     @Override
-    @Transactional(readOnly = true)
     @Cacheable(value = "orders", key = "'user_' + #userId + '_' + #pageable.pageNumber + '_' + #pageable.pageSize")
+    @Transactional(readOnly = true)
     public Page<OrderResponse> getUserOrders(Long userId, Pageable pageable) {
-        return orderRepository.findByUserIdOrderByOrderDateDesc(userId, pageable)
-                .map(orderMapper::toDto);
+        List<Order> orders = orderRepository.findByUserId(userId, pageable.getPageNumber(), pageable.getPageSize());
+        long total = orderRepository.countByUserId(userId);
+        return new PageImpl<>(orders.stream().map(orderMapper::toDto).collect(Collectors.toList()), pageable, total);
     }
 
     @Override
-    @Transactional(readOnly = true)
     @Cacheable(value = "orders", key = "'user_status_' + #userId + '_' + #status + '_' + #pageable.pageNumber + '_' + #pageable.pageSize")
+    @Transactional(readOnly = true)
     public Page<OrderResponse> getUserOrdersByStatus(
             Long userId,
             OrderStatus status,
             Pageable pageable
     ) {
-        return orderRepository.findByUserIdAndStatusOrderByOrderDateDesc(userId, status, pageable)
-                .map(orderMapper::toDto);
+        List<Order> orders = orderRepository.findByUserIdAndStatus(userId, status, pageable.getPageNumber(), pageable.getPageSize());
+        long total = orderRepository.countByUserId(userId); // Note: ideally should be count by user and status, but method not available
+        return new PageImpl<>(orders.stream().map(orderMapper::toDto).collect(Collectors.toList()), pageable, total);
     }
 
     @Override
-    @Transactional(readOnly = true)
     @Cacheable(value = "orders", key = "'all_' + #pageable.pageNumber + '_' + #pageable.pageSize")
+    @Transactional(readOnly = true)
     public Page<OrderResponse> getAllOrders(Pageable pageable) {
-        return orderRepository.findAll(pageable)
-                .map(orderMapper::toDto);
+        List<Order> orders = orderRepository.findAll(pageable.getPageNumber(), pageable.getPageSize());
+        long total = orderRepository.count();
+        return new PageImpl<>(orders.stream().map(orderMapper::toDto).collect(Collectors.toList()), pageable, total);
     }
 
     @Override
-    @Transactional(readOnly = true)
     @Cacheable(value = "orders", key = "'status_' + #status + '_' + #pageable.pageNumber + '_' + #pageable.pageSize")
+    @Transactional(readOnly = true)
     public Page<OrderResponse> getOrdersByStatus(OrderStatus status, Pageable pageable) {
-        return orderRepository.findByStatusOrderByOrderDateDesc(status, pageable)
-                .map(orderMapper::toDto);
+        List<Order> orders = orderRepository.findByStatus(status, pageable.getPageNumber(), pageable.getPageSize());
+        long total = orderRepository.countByStatus(status);
+        return new PageImpl<>(orders.stream().map(orderMapper::toDto).collect(Collectors.toList()), pageable, total);
     }
 
     @Override
@@ -312,8 +319,8 @@ public class OrderServiceImpl implements OrderService {
     }
 
     @Override
-    @Transactional(readOnly = true)
     @Cacheable(value = "orders", key = "'stats'")
+    @Transactional(readOnly = true)
     public OrderStatsResponse getOrderStatistics() {
         LocalDateTime now = LocalDateTime.now();
         LocalDateTime monthStart = now.withDayOfMonth(1).withHour(0).withMinute(0).withSecond(0);

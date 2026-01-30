@@ -17,8 +17,7 @@ import com.smart_ecomernce_api.smart_ecomernce_api.modules.product.entity.Produc
 import com.smart_ecomernce_api.smart_ecomernce_api.modules.product.repository.ProductRepository;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
-import org.springframework.cache.annotation.CacheEvict;
-import org.springframework.cache.annotation.Cacheable;
+
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -38,7 +37,6 @@ public class CartServiceImpl implements CartService {
     private final CartMapper cartMapper;
 
     @Override
-    @CacheEvict(value = "carts", allEntries = true)
     public CartDto createCart() {
         log.info("Creating new cart");
 
@@ -51,7 +49,6 @@ public class CartServiceImpl implements CartService {
     }
 
     @Override
-    @CacheEvict(value = "carts", allEntries = true)
     public CartDto createCartForSession(String sessionId) {
         log.info("Creating cart for session: {}", sessionId);
 
@@ -64,7 +61,6 @@ public class CartServiceImpl implements CartService {
     }
 
     @Override
-    @Cacheable(value = "carts", key = "#cartId")
     @Transactional(readOnly = true)
     public CartDto getCart(UUID cartId) {
         log.info("Fetching cart: {}", cartId);
@@ -75,7 +71,6 @@ public class CartServiceImpl implements CartService {
     }
 
     @Override
-    @CacheEvict(value = "carts", key = "#cartId")
     public CartItemDto addToCart(UUID cartId, AddItemToCartRequest request) {
         log.info("Adding product {} to cart {}", request.getProductId(), cartId);
 
@@ -103,7 +98,6 @@ public class CartServiceImpl implements CartService {
     }
 
     @Override
-    @CacheEvict(value = "carts", key = "#cartId")
     public CartItemDto updateItemQuantity(UUID cartId, Long productId, UpdateCartItemRequest request) {
         log.info("Updating cart {} item {} quantity to {}", cartId, productId, request.getQuantity());
 
@@ -111,7 +105,7 @@ public class CartServiceImpl implements CartService {
 
         CartItem cartItem = cart.getItem(productId);
         if (cartItem == null) {
-            ResourceNotFoundException.forResource("Cart item for product", productId);
+            throw ResourceNotFoundException.forResource("Cart item for product", productId);
         }
 
         Product product = cartItem.getProduct();
@@ -128,7 +122,6 @@ public class CartServiceImpl implements CartService {
     }
 
     @Override
-    @CacheEvict(value = "carts", key = "#cartId")
     public void removeItem(UUID cartId, Long productId) {
         log.info("Removing product {} from cart {}", productId, cartId);
 
@@ -141,7 +134,6 @@ public class CartServiceImpl implements CartService {
     }
 
     @Override
-    @CacheEvict(value = "carts", key = "#cartId")
     public void clearCart(UUID cartId) {
         log.info("Clearing cart: {}", cartId);
 
@@ -158,7 +150,6 @@ public class CartServiceImpl implements CartService {
     }
 
     @Override
-    @CacheEvict(value = "carts", key = "#cartId")
     public CartDto applyDiscount(UUID cartId, String couponCode, BigDecimal discountAmount) {
         log.info("Applying discount to cart {}: code={}, amount={}", cartId, couponCode, discountAmount);
 
@@ -172,7 +163,6 @@ public class CartServiceImpl implements CartService {
     }
 
     @Override
-    @CacheEvict(value = "carts", key = "#cartId")
     public void markAsAbandoned(UUID cartId) {
         log.info("Marking cart as abandoned: {}", cartId);
 
@@ -197,14 +187,15 @@ public class CartServiceImpl implements CartService {
     }
 
     @Override
-    @CacheEvict(value = "carts", allEntries = true)
     public int cleanupOldCarts(int days) {
         log.info("Cleaning up empty carts older than {} days", days);
 
         LocalDateTime cutoffDate = LocalDateTime.now().minusDays(days);
         List<Cart> oldCarts = cartRepository.findEmptyCartsBefore(cutoffDate);
 
-        cartRepository.deleteAll(oldCarts);
+        for (Cart cart : oldCarts) {
+            cartRepository.deleteById(cart.getId());
+        }
 
         log.info("Deleted {} old empty carts", oldCarts.size());
         return oldCarts.size();

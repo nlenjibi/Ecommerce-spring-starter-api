@@ -67,16 +67,7 @@ public class SecurityUtils {
         return Base64.getEncoder().encodeToString(salt);
     }
 
-    /**
-     * Generate secure random token
-     * @param length Token length
-     * @return Random token string
-     */
-    public static String generateToken(int length) {
-        byte[] token = new byte[length];
-        SECURE_RANDOM.nextBytes(token);
-        return Base64.getUrlEncoder().withoutPadding().encodeToString(token);
-    }
+
 
     /**
      * Verify password against hash

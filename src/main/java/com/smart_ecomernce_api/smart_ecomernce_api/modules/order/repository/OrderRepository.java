@@ -1,90 +1,124 @@
 package com.smart_ecomernce_api.smart_ecomernce_api.modules.order.repository;
 
 import com.smart_ecomernce_api.smart_ecomernce_api.modules.order.entity.Order;
+import com.smart_ecomernce_api.smart_ecomernce_api.modules.order.entity.OrderStats;
 import com.smart_ecomernce_api.smart_ecomernce_api.modules.order.entity.OrderStatus;
 import com.smart_ecomernce_api.smart_ecomernce_api.modules.order.entity.PaymentStatus;
-import org.springframework.data.domain.Page;
-import org.springframework.data.domain.Pageable;
-import org.springframework.data.jpa.repository.JpaRepository;
-import org.springframework.data.jpa.repository.Query;
-import org.springframework.data.repository.query.Param;
-import org.springframework.stereotype.Repository;
 
 import java.math.BigDecimal;
 import java.time.LocalDateTime;
 import java.util.List;
 import java.util.Optional;
 
-@Repository
-public interface OrderRepository extends JpaRepository<Order, Long> {
+public interface OrderRepository {
 
-    // Find by order number
+    /**
+     * Save a new order
+     */
+    Order save(Order order);
+
+    /**
+     * Update an existing order
+     */
+    Order update(Order order);
+
+    /**
+     * Find order by ID
+     */
+    Optional<Order> findById(Long id);
+
+    /**
+     * Find order by order number
+     */
     Optional<Order> findByOrderNumber(String orderNumber);
 
-    // Find user orders
-    Page<Order> findByUserIdOrderByOrderDateDesc(Long userId, Pageable pageable);
+    /**
+     * Find all orders with pagination
+     */
+    List<Order> findAll(int page, int size);
 
-    // Find by status
-    Page<Order> findByStatusOrderByOrderDateDesc(OrderStatus status, Pageable pageable);
+    /**
+     * Find orders by user ID with pagination
+     */
+    List<Order> findByUserId(Long userId, int page, int size);
 
-    // Find user orders by status
-    Page<Order> findByUserIdAndStatusOrderByOrderDateDesc(
-            Long userId, OrderStatus status, Pageable pageable);
+    /**
+     * Find orders by status with pagination
+     */
+    List<Order> findByStatus(OrderStatus status, int page, int size);
 
-    // Count user orders
+    /**
+     * Find orders by user ID and status
+     */
+    List<Order> findByUserIdAndStatus(Long userId, OrderStatus status, int page, int size);
 
-    // Count orders by status
+    /**
+     * Find orders by date range
+     */
+    List<Order> findByDateRange(LocalDateTime startDate, LocalDateTime endDate, int page, int size);
+
+    /**
+     * Find recent orders
+     */
+    List<Order> findRecentOrders(LocalDateTime startDate, int limit);
+
+    /**
+     * Find pending payments
+     */
+    List<Order> findPendingPayments(LocalDateTime cutoffDate);
+
+    /**
+     * Count total orders
+     */
+    long count();
+
+    /**
+     * Count orders by status
+     */
     long countByStatus(OrderStatus status);
 
-    // Find recent orders
-    @Query("SELECT o FROM Order o WHERE o.orderDate >= :startDate ORDER BY o.orderDate DESC")
-    List<Order> findRecentOrders(@Param("startDate") LocalDateTime startDate);
+    /**
+     * Count orders by payment status
+     */
+    long countByPaymentStatus(PaymentStatus paymentStatus);
 
-    // Find pending payments
-    @Query("SELECT o FROM Order o WHERE o.paymentStatus = 'PENDING' " +
-            "AND o.orderDate < :cutoffDate")
-    List<Order> findPendingPayments(@Param("cutoffDate") LocalDateTime cutoffDate);
+    /**
+     * Count user orders
+     */
+    long countByUserId(Long userId);
 
-    // Calculate total revenue
-    @Query("SELECT SUM(o.totalAmount) FROM Order o WHERE o.paymentStatus = 'PAID'")
+    /**
+     * Calculate total revenue
+     */
     BigDecimal calculateTotalRevenue();
 
-    // Calculate revenue for period
-    @Query("SELECT SUM(o.totalAmount) FROM Order o WHERE o.paymentStatus = 'PAID' " +
-            "AND o.orderDate BETWEEN :startDate AND :endDate")
-    BigDecimal calculateRevenue(
-            @Param("startDate") LocalDateTime startDate,
-            @Param("endDate") LocalDateTime endDate
-    );
+    /**
+     * Calculate revenue for a specific period
+     */
+    BigDecimal calculateRevenue(LocalDateTime startDate, LocalDateTime endDate);
 
-    // Find orders by date range
-    @Query("SELECT o FROM Order o WHERE o.orderDate BETWEEN :startDate AND :endDate " +
-            "ORDER BY o.orderDate DESC")
-    Page<Order> findOrdersByDateRange(
-            @Param("startDate") LocalDateTime startDate,
-            @Param("endDate") LocalDateTime endDate,
-            Pageable pageable
-    );
+    /**
+     * Get order statistics
+     */
+    OrderStats getOrderStatistics();
 
-    // Check if user has purchased product
-    @Query("SELECT CASE WHEN COUNT(oi) > 0 THEN true ELSE false END " +
-            "FROM OrderItem oi WHERE oi.order.user.id = :userId " +
-            "AND oi.product.id = :productId " +
-            "AND oi.order.status = 'DELIVERED'")
-    boolean existsByUserIdAndProductId(
-            @Param("userId") Long userId,
-            @Param("productId") Long productId
-    );
+    /**
+     * Check if user has purchased a product
+     */
+    boolean existsByUserIdAndProductId(Long userId, Long productId);
 
-    // Get order statistics
-    @Query("SELECT o.status, COUNT(o) FROM Order o GROUP BY o.status")
-    List<Object[]> getOrderStatistics();
+    /**
+     * Delete order by ID
+     */
+    boolean deleteById(Long id);
 
+    /**
+     * Check if order exists
+     */
+    boolean existsById(Long id);
 
-    @Query("SELECT o FROM Order o WHERE o.user.id = :userId ORDER BY o.createdAt DESC")
-    Page<Order> findByUserId(@Param("userId") Long userId, Pageable pageable);
-
-    @Query("SELECT o FROM Order o WHERE o.status = :status ORDER BY o.createdAt DESC")
-    Page<Order> findByStatus(@Param("status") OrderStatus status, Pageable pageable);
-    long countByPaymentStatus(PaymentStatus paymentStatus);
+    /**
+     * Check if order number exists
+     */
+    boolean existsByOrderNumber(String orderNumber);
 }

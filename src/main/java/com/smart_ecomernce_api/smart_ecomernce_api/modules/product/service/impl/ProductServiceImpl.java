@@ -154,7 +154,6 @@ public class ProductServiceImpl implements ProductService {
      * Get product by slug - CACHED
      */
     @Transactional(readOnly = true)
-    @Cacheable(value = "product-by-slug", key = "#slug")
     @Override
     public ProductResponse getProductBySlug(String slug) {
         log.info("Fetching product by slug: {}", slug);
@@ -170,7 +169,7 @@ public class ProductServiceImpl implements ProductService {
     @Transactional(readOnly = true)
     public Page<ProductResponse> getFeaturedProducts(Pageable pageable) {
         log.info("Fetching featured product");
-        Page<Product> products = productRepository.findByFeaturedTrueAndIsActiveTrue(pageable);
+        Page<Product> products = productRepository.findFeaturedProducts(pageable);
         return products.map(productMapper::toDto);
     }
 
@@ -287,3 +286,4 @@ public class ProductServiceImpl implements ProductService {
                 productId, quantity, product.getStockQuantity());
     }
 }
+

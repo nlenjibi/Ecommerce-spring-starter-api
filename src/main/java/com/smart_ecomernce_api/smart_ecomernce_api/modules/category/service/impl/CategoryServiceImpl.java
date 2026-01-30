@@ -16,6 +16,7 @@ import lombok.extern.slf4j.Slf4j;
 import org.springframework.cache.annotation.CacheEvict;
 import org.springframework.cache.annotation.Cacheable;
 import org.springframework.data.domain.Page;
+import org.springframework.data.domain.PageImpl;
 import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -100,12 +101,33 @@ public class CategoryServiceImpl implements CategoryService {
     @Override
     @Transactional(readOnly = true)
     public Page<CategoryResponse> getAllCategories(Pageable pageable, Boolean isActive) {
-        return categoryRepository.findAllFiltered(isActive, pageable)
+        List<Category> categories;
+        long total;
+
+        if (isActive == null) {
+            categories = categoryRepository.findAll(pageable.getPageNumber(), pageable.getPageSize());
+            total = categoryRepository.count();
+        } else if (isActive) {
+            categories = categoryRepository.findAllActive(pageable.getPageNumber(), pageable.getPageSize());
+            total = categoryRepository.countActive();
+        } else {
+            // For inactive categories, since there's no specific method, use findAll and filter
+            categories = categoryRepository.findAll(pageable.getPageNumber(), pageable.getPageSize())
+                    .stream()
+                    .filter(category -> !category.getIsActive())
+                    .collect(Collectors.toList());
+            total = categoryRepository.count() - categoryRepository.countActive();
+        }
+
+        List<CategoryResponse> responses = categories.stream()
                 .map(category -> {
                     CategoryResponse response = categoryMapper.toResponse(category, false);
                     response.setProductCount(categoryRepository.countProductsByCategoryId(category.getId()));
                     return response;
-                });
+                })
+                .collect(Collectors.toList());
+
+        return new PageImpl<>(responses, pageable, total);
     }
 
     @Override
@@ -255,7 +277,7 @@ public class CategoryServiceImpl implements CategoryService {
                 List<Category> children = categoryRepository.findByParentId(id);
                 Category newParent = category.getParent();
                 children.forEach(child -> child.setParent(newParent));
-                categoryRepository.saveAll(children);
+                children.forEach(categoryRepository::save);
                 log.info("Reassigned {} children to parent", children.size());
             } else {
                 // Cascade delete handled by orphanRemoval in entity
@@ -263,7 +285,7 @@ public class CategoryServiceImpl implements CategoryService {
             }
         }
 
-        categoryRepository.delete(category);
+        categoryRepository.deleteById(category.getId());
         log.info("Category deleted: id={}, name={}", id, category.getName());
     }
 

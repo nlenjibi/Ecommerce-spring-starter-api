@@ -1,7 +1,0 @@
-package com.smart_ecomernce_api.smart_ecomernce_api.modules.user.repository;
-
-import com.smart_ecomernce_api.smart_ecomernce_api.modules.user.entity.Profile;
-import org.springframework.data.repository.CrudRepository;
-
-public interface ProfileRepository extends CrudRepository<Profile, Long> {
-}

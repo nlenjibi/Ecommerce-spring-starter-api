@@ -4,126 +4,258 @@ import com.smart_ecomernce_api.smart_ecomernce_api.modules.product.entity.Invent
 import com.smart_ecomernce_api.smart_ecomernce_api.modules.product.entity.Product;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
-import org.springframework.data.jpa.repository.JpaRepository;
-import org.springframework.data.jpa.repository.JpaSpecificationExecutor;
-import org.springframework.data.jpa.repository.Query;
-import org.springframework.data.repository.query.Param;
-import org.springframework.stereotype.Repository;
+import org.springframework.data.domain.Sort;
 
 import java.math.BigDecimal;
+import java.time.LocalDateTime;
 import java.util.List;
 import java.util.Optional;
 
-@Repository
-public interface ProductRepository extends JpaRepository<Product, Long> {
-    Optional<Product> findBySlug(String slug);
+/**
+ * Custom ProductRepository interface for JDBC-based implementation
+ * No JPA dependencies - pure JDBC operations
+ */
+public interface ProductRepository {
 
-    Optional<Product> findBySku(String sku);
-
-    boolean existsBySlug(String slug);
-
-    Page<Product> findByFeaturedTrueAndIsActiveTrue(Pageable pageable);
-
+    // ==================== Basic CRUD Operations ====================
 
     /**
-     * Find product by inventory status
+     * Save a product (insert if new, update if existing)
+     */
+    Product save(Product product);
+
+    /**
+     * Save multiple products
+     */
+    List<Product> saveAll(Iterable<Product> products);
+
+    /**
+     * Find product by ID
+     */
+    Optional<Product> findById(Long id);
+
+    /**
+     * Check if product exists by ID
+     */
+    boolean existsById(Long id);
+
+    /**
+     * Find all products
+     */
+    List<Product> findAll();
+
+    /**
+     * Find all products with sorting
+     */
+    List<Product> findAll(Sort sort);
+
+    /**
+     * Find all products with pagination
+     */
+    Page<Product> findAll(Pageable pageable);
+
+    /**
+     * Find all products by IDs
+     */
+    List<Product> findAllById(Iterable<Long> ids);
+
+    /**
+     * Count total number of products
+     */
+    long count();
+
+    /**
+     * Delete product by ID
+     */
+    void deleteById(Long id);
+
+    /**
+     * Delete a product
+     */
+    void delete(Product product);
+
+    /**
+     * Delete products by IDs
+     */
+    void deleteAllById(Iterable<Long> ids);
+
+    /**
+     * Delete multiple products
+     */
+    void deleteAll(Iterable<Product> products);
+
+    /**
+     * Delete all products
+     */
+    void deleteAll();
+
+    // ==================== Custom Query Methods ====================
+
+    /**
+     * Find product by slug
+     */
+    Optional<Product> findBySlug(String slug);
+
+    /**
+     * Find product by SKU
+     */
+    Optional<Product> findBySku(String sku);
+
+    /**
+     * Check if slug exists
+     */
+    boolean existsBySlug(String slug);
+
+    /**
+     * Check if SKU exists
+     */
+    boolean existsBySku(String sku);
+
+    /**
+     * Find active product by ID
+     */
+    Optional<Product> findActiveById(Long id);
+
+    /**
+     * Find featured and active products with pagination
+     */
+    Page<Product> findFeaturedProducts(Pageable pageable);
+
+    /**
+     * Find products by category
+     */
+    Page<Product> findByCategory(Long categoryId, Pageable pageable);
+
+    /**
+     * Find products by price range
+     */
+    Page<Product> findByPriceRange(BigDecimal minPrice, BigDecimal maxPrice, Pageable pageable);
+
+    /**
+     * Search products by name
+     */
+    Page<Product> searchByName(String search, Pageable pageable);
+
+    /**
+     * Search products by keyword (name or description)
+     */
+    Page<Product> searchProducts(String keyword, Pageable pageable);
+
+    /**
+     * Find products with advanced filters
+     */
+    Page<Product> findByAdvancedFilters(Long categoryId, BigDecimal minPrice,
+                                        BigDecimal maxPrice, String search, Pageable pageable);
+
+    // ==================== Inventory Management Methods ====================
+
+    /**
+     * Find products by inventory status
      */
     List<Product> findByInventoryStatus(InventoryStatus status);
 
     /**
-     * Find product with low stock
+     * Find low stock products
      */
-    @Query("SELECT p FROM Product p WHERE p.inventoryStatus = 'LOW_STOCK' " +
-            "AND p.trackInventory = true AND p.isActive = true")
     List<Product> findLowStockProducts();
 
     /**
-     * Find out of stock product
+     * Find out of stock products
      */
-    @Query("SELECT p FROM Product p WHERE p.inventoryStatus = 'OUT_OF_STOCK' " +
-            "AND p.trackInventory = true AND p.isActive = true")
     List<Product> findOutOfStockProducts();
 
     /**
-     * Find product that need reorder
+     * Find products needing reorder
      */
-    @Query("SELECT p FROM Product p WHERE p.stockQuantity <= p.reorderPoint " +
-            "AND p.trackInventory = true AND p.isActive = true")
     List<Product> findProductsNeedingReorder();
 
     /**
-     * Find in-stock product by category
+     * Find in-stock products by category
      */
-    @Query("SELECT p FROM Product p WHERE p.category.id = :categoryId " +
-            "AND p.inventoryStatus IN ('IN_STOCK', 'LOW_STOCK') " +
-            "AND p.isActive = true")
-    Page<Product> findInStockProductsByCategory(
-            @Param("categoryId") Long categoryId,
-            Pageable pageable
-    );
+    Page<Product> findInStockProductsByCategory(Long categoryId, Pageable pageable);
 
     /**
-     * Count product by inventory status
+     * Count products by inventory status
      */
-    @Query("SELECT p.inventoryStatus, COUNT(p) FROM Product p " +
-            "WHERE p.trackInventory = true " +
-            "GROUP BY p.inventoryStatus")
     List<Object[]> countByInventoryStatus();
 
     /**
-     * Find product with available quantity greater than specified amount
+     * Find products with available quantity greater than specified amount
      */
-    @Query("SELECT p FROM Product p " +
-            "WHERE (p.stockQuantity - p.reservedQuantity) >= :minQuantity " +
-            "AND p.isActive = true")
-    List<Product> findByAvailableQuantityGreaterThan(
-            @Param("minQuantity") Integer minQuantity
-    );
+    List<Product> findByAvailableQuantityGreaterThan(Integer minQuantity);
 
     /**
      * Check if product has sufficient stock
      */
-    @Query("SELECT CASE WHEN (p.stockQuantity - p.reservedQuantity) >= :quantity " +
-            "THEN true ELSE false END " +
-            "FROM Product p WHERE p.id = :productId")
-    boolean hasSufficientStock(
-            @Param("productId") Long productId,
-            @Param("quantity") Integer quantity
-    );
+    boolean hasSufficientStock(Long productId, Integer quantity);
 
-    @Query("SELECT p FROM Product p WHERE p.isActive = true AND p.id = :id")
-    Optional<Product> findActiveById(@Param("id") Long id);
+    /**
+     * Update stock quantity
+     */
+    boolean updateStock(Long productId, Integer quantity);
 
-    @Query("SELECT p FROM Product p WHERE p.category.id = :categoryId AND p.isActive = true")
-    Page<Product> findByCategory(@Param("categoryId") Long categoryId, Pageable pageable);
+    /**
+     * Reserve stock for order
+     */
+    boolean reserveStock(Long productId, Integer quantity);
 
-    @Query("SELECT p FROM Product p WHERE " +
-            "p.isActive = true AND " +
-            "p.discountPrice >= :minPrice AND " +
-            "p.discountPrice <= :maxPrice")
-    Page<Product> findByPriceRange(@Param("minPrice") BigDecimal minPrice,
-                                   @Param("maxPrice") BigDecimal maxPrice,
-                                   Pageable pageable);
+    /**
+     * Release reserved stock
+     */
+    boolean releaseReservedStock(Long productId, Integer quantity);
 
-    @Query("SELECT p FROM Product p WHERE " +
-            "p.isActive = true AND " +
-            "LOWER(p.name) LIKE LOWER(CONCAT('%', :search, '%'))")
-    Page<Product> searchByName(@Param("search") String search, Pageable pageable);
+    /**
+     * Deduct stock (after order completion)
+     */
+    boolean deductStock(Long productId, Integer quantity);
 
-    @Query("SELECT p FROM Product p WHERE " +
-            "p.isActive = true AND " +
-            "p.category.id = :categoryId AND " +
-            "p.discountPrice >= :minPrice AND " +
-            "p.discountPrice <= :maxPrice AND " +
-            "LOWER(p.name) LIKE LOWER(CONCAT('%', :search, '%'))")
-    Page<Product> findByAdvancedFilters(@Param("categoryId") Long categoryId,
-                                        @Param("minPrice") BigDecimal minPrice,
-                                        @Param("maxPrice") BigDecimal maxPrice,
-                                        @Param("search") String search,
-                                        Pageable pageable);
+    /**
+     * Update inventory status
+     */
+    boolean updateInventoryStatus(Long productId, InventoryStatus status);
 
-    @Query("SELECT p FROM Product p WHERE p.isActive = true AND " +
-            "(LOWER(p.name) LIKE LOWER(CONCAT('%', :keyword, '%')) OR " +
-            "LOWER(p.description) LIKE LOWER(CONCAT('%', :keyword, '%')))")
-    Page<Product> searchProducts(@Param("keyword") String keyword, Pageable pageable);
+    /**
+     * Find products with stock below reorder point
+     */
+    List<Product> findProductsBelowReorderPoint();
+
+    /**
+     * Find new products
+     */
+    Page<Product> findNewProducts(Pageable pageable);
+
+    /**
+     * Find bestseller products
+     */
+    Page<Product> findBestsellerProducts(Pageable pageable);
+
+    /**
+     * Find products with discount
+     */
+    Page<Product> findDiscountedProducts(Pageable pageable);
+
+    /**
+     * Find products by multiple categories
+     */
+    Page<Product> findByCategories(List<Long> categoryIds, Pageable pageable);
+
+    /**
+     * Update product price
+     */
+    boolean updatePrice(Long productId, BigDecimal price, BigDecimal discountPrice);
+
+    /**
+     * Find products created between dates
+     */
+    List<Product> findByCreatedAtBetween(LocalDateTime startDate, LocalDateTime endDate);
+
+    /**
+     * Count active products by category
+     */
+    Long countByCategory(Long categoryId);
+
+    /**
+     * Batch update products
+     */
+    int batchUpdate(List<Product> products);
 }
