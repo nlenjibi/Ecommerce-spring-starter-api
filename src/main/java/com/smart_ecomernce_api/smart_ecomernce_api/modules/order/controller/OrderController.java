@@ -142,6 +142,17 @@ Long userId    ) {
         return ResponseEntity.ok(ApiResponse.success("Order updated successfully", response));
     }
 
+    @PatchMapping("/admin/{id}/status")
+    @Operation(summary = "Update order status (Admin)")
+    public ResponseEntity<ApiResponse<OrderResponse>> updateOrderStatus(
+            @PathVariable Long id,
+            @RequestParam OrderStatus status
+    ) {
+        OrderUpdateRequest request = OrderUpdateRequest.builder().status(status).build();
+        OrderResponse response = orderService.updateOrderStatus(id, request);
+        return ResponseEntity.ok(ApiResponse.success("Order status updated successfully", response));
+    }
+
     @PutMapping("/admin/{id}/confirm")
 
     @Operation(summary = "Confirm order (Admin)")
@@ -197,6 +208,30 @@ Long userId    ) {
         return ResponseEntity.ok(ApiResponse.success(stats));
     }
 
+    @GetMapping("/admin/{id}")
+    @Operation(summary = "Get order by ID (Admin)")
+//    @SecurityRequirement(name = "bearerAuth")
+    public ResponseEntity<ApiResponse<OrderResponse>> getOrderByIdAsAdmin(@PathVariable Long id) {
+        OrderResponse response = orderService.getOrderByIdAsAdmin(id);
+        return ResponseEntity.ok(ApiResponse.success("Order fetched successfully", response));
+    }
 
+    @DeleteMapping("/{orderId}")
+    @Operation(summary = "Delete order by ID")
+//    @SecurityRequirement(name = "bearerAuth")
+    public ResponseEntity<ApiResponse<Void>> deleteOrder(@PathVariable Long orderId) {
+        orderService.deleteOrder(orderId);
+        return ResponseEntity.ok(ApiResponse.success("Order deleted successfully", null));
+    }
 
+    @PutMapping("/customer/{id}")
+    @Operation(summary = "Update order (Customer, only if status is PENDING)")
+    public ResponseEntity<ApiResponse<OrderResponse>> updateOrderAsCustomer(
+            @PathVariable Long id,
+            @Valid @RequestBody OrderUpdateRequest request,
+            @RequestParam Long userId
+    ) {
+        OrderResponse response = orderService.updateOrderAsCustomer(id, request, userId);
+        return ResponseEntity.ok(ApiResponse.success("Order updated successfully", response));
+    }
 }

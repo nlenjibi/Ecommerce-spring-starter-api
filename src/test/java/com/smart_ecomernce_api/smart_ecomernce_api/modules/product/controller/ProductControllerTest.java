@@ -170,6 +170,23 @@ class ProductControllerTest {
     }
 
     @Test
+    void getProductsByCategoryName_ShouldReturnProducts() throws Exception {
+        // Given
+        List<ProductResponse> products = List.of(productResponse);
+        Page<ProductResponse> productPage = new PageImpl<>(products, PageRequest.of(0, 20), 1);
+        when(productService.getProductsByCategoryName(eq("accessories"), any(Pageable.class))).thenReturn(productPage);
+
+        // When & Then
+        mockMvc.perform(get("/v1/products/category/name/accessories")
+                .param("page", "0")
+                .param("size", "20"))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.success").value(true));
+
+        verify(productService).getProductsByCategoryName(eq("accessories"), any(Pageable.class));
+    }
+
+    @Test
     void updateProduct_ShouldReturnUpdatedProduct() throws Exception {
         // Given
         when(productService.updateProduct(eq(1L), any(ProductUpdateRequest.class))).thenReturn(productResponse);
@@ -210,5 +227,40 @@ class ProductControllerTest {
                 .andExpect(status().isBadRequest());
 
         verify(productService, never()).createProduct(any(ProductCreateRequest.class));
+    }
+
+    @Test
+    void getProductsByInventoryStatus_ShouldReturnProducts() throws Exception {
+        // Given
+        List<ProductResponse> products = List.of(productResponse);
+        Page<ProductResponse> productPage = new PageImpl<>(products, PageRequest.of(0, 20), 1);
+        when(productService.findByInventoryStatus(eq(com.smart_ecomernce_api.smart_ecomernce_api.modules.product.entity.InventoryStatus.LOW_STOCK), any(Pageable.class)))
+                .thenReturn(productPage);
+
+        // When & Then
+        mockMvc.perform(get("/v1/products/inventory-status/LOW_STOCK")
+                .param("page", "0")
+                .param("size", "20"))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.success").value(true));
+
+        verify(productService).findByInventoryStatus(eq(com.smart_ecomernce_api.smart_ecomernce_api.modules.product.entity.InventoryStatus.LOW_STOCK), any(Pageable.class));
+    }
+
+    @Test
+    void getProductsNeedingReorder_ShouldReturnProducts() throws Exception {
+        // Given
+        List<ProductResponse> products = List.of(productResponse);
+        Page<ProductResponse> productPage = new PageImpl<>(products, PageRequest.of(0, 20), 1);
+        when(productService.getProductsNeedingReorder(any(Pageable.class))).thenReturn(productPage);
+
+        // When & Then
+        mockMvc.perform(get("/v1/products/needs-reorder")
+                .param("page", "0")
+                .param("size", "20"))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.success").value(true));
+
+        verify(productService).getProductsNeedingReorder(any(Pageable.class));
     }
 }

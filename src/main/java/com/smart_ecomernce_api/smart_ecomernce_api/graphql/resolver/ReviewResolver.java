@@ -1,19 +1,18 @@
 package com.smart_ecomernce_api.smart_ecomernce_api.graphql.resolver;
 
 import com.smart_ecomernce_api.smart_ecomernce_api.common.response.PaginatedResponse;
-import com.smart_ecomernce_api.smart_ecomernce_api.graphql.dto.ProductDto;
 import com.smart_ecomernce_api.smart_ecomernce_api.graphql.dto.ReviewResponseDto;
 import com.smart_ecomernce_api.smart_ecomernce_api.graphql.input.PageInput;
 import com.smart_ecomernce_api.smart_ecomernce_api.graphql.input.SortDirection;
 import com.smart_ecomernce_api.smart_ecomernce_api.modules.review.dto.ReviewCreateRequest;
 import com.smart_ecomernce_api.smart_ecomernce_api.modules.review.dto.ReviewResponse;
+import com.smart_ecomernce_api.smart_ecomernce_api.modules.review.dto.ReviewSummaryResponse;
 import com.smart_ecomernce_api.smart_ecomernce_api.modules.review.dto.ReviewUpdateRequest;
 import com.smart_ecomernce_api.smart_ecomernce_api.modules.review.entity.ProductRatingStats;
 import com.smart_ecomernce_api.smart_ecomernce_api.modules.review.service.ReviewService;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
-import org.springframework.cache.annotation.CacheEvict;
-import org.springframework.cache.annotation.Cacheable;
+
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
@@ -45,7 +44,7 @@ class ReviewResolver {
     }
 
     @QueryMapping
-    public ProductRatingStats productRatingStats(@Argument Long productId) {
+    public ReviewSummaryResponse productRatingStats(@Argument Long productId) {
         log.info("GraphQL Query: productRatingStats(productId: {})", productId);
         return reviewService.getProductRatingStats(productId);
     }

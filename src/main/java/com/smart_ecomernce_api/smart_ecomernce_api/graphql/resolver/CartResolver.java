@@ -24,7 +24,7 @@ public class CartResolver {
     private final CartService cartService;
 
     @QueryMapping
-    public CartDto cart(@Argument UUID id) {
+    public CartDto cart(@Argument Long id) {
         log.info("GraphQL Query: cart(id: {})", id);
         return cartService.getCart(id);
     }
@@ -36,14 +36,14 @@ public class CartResolver {
     }
 
     @MutationMapping
-    public CartItemDto addItemToCart(@Argument UUID cartId, @Argument AddItemToCartRequest input) {
+    public CartItemDto addItemToCart(@Argument Long cartId, @Argument AddItemToCartRequest input) {
         log.info("GraphQL Mutation: addItemToCart(cartId: {})", cartId);
         return cartService.addToCart(cartId, input);
     }
 
     @MutationMapping
     public CartItemDto updateCartItem(
-            @Argument UUID cartId,
+            @Argument Long cartId,
             @Argument Long productId,
             @Argument UpdateCartItemRequest input) {
         log.info("GraphQL Mutation: updateCartItem(cartId: {}, productId: {})", cartId, productId);
@@ -51,16 +51,25 @@ public class CartResolver {
     }
 
     @MutationMapping
-    public Boolean removeCartItem(@Argument UUID cartId, @Argument Long productId) {
+    public Boolean removeCartItem(@Argument Long cartId, @Argument Long productId) {
         log.info("GraphQL Mutation: removeCartItem(cartId: {}, productId: {})", cartId, productId);
         cartService.removeItem(cartId, productId);
         return true;
     }
 
     @MutationMapping
-    public Boolean clearCart(@Argument UUID cartId) {
+    public Boolean clearCart(@Argument Long cartId) {
         log.info("GraphQL Mutation: clearCart(cartId: {})", cartId);
         cartService.clearCart(cartId);
         return true;
+    }
+
+    @MutationMapping
+    public CartDto mergeCart(@Argument Long guestCartId) {
+        log.info("GraphQL Mutation: mergeCart(guestCartId: {})", guestCartId);
+        // Assuming userId is obtained from security context
+        // For now, hardcode or get from context
+        Long userId = 1L; // TODO: Get from authentication
+        return cartService.mergeCart(guestCartId, userId);
     }
 }

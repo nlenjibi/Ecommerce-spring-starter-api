@@ -23,7 +23,6 @@ import org.springframework.data.domain.Pageable;
 
 import java.math.BigDecimal;
 import java.time.LocalDateTime;
-import java.util.Arrays;
 import java.util.List;
 import java.util.Optional;
 
@@ -152,7 +151,7 @@ class ProductServiceTest {
 
     @Test
     void getAllProducts_ShouldReturnPaginatedProducts() {
-        List<Product> products = Arrays.asList(product);
+        List<Product> products = List.of(product);
         Page<Product> productPage = new PageImpl<>(products, PageRequest.of(0, 20), 1);
         when(productRepository.findAll(any(Pageable.class))).thenReturn(productPage);
         when(productMapper.toDto(product)).thenReturn(productResponse);
@@ -189,5 +188,31 @@ class ProductServiceTest {
 
         verify(productRepository).findById(1L);
         verify(productRepository).delete(product);
+    }
+
+    @Test
+    void getProductsByCategoryName_ShouldLookupCategoryIgnoreCase_AndReturnProducts() {
+        // Given
+        Category category = new Category();
+        category.setId(10L);
+        category.setName("Accessories");
+
+        Pageable pageable = PageRequest.of(0, 20);
+        List<Product> products = List.of(product);
+        Page<Product> productPage = new PageImpl<>(products, pageable, 1);
+
+        when(categoryRepository.findByNameIgnoreCase("accessories")).thenReturn(Optional.of(category));
+        when(categoryRepository.findById(10L)).thenReturn(Optional.of(category));
+        when(productRepository.findByCategory(eq(10L), any(Pageable.class))).thenReturn(productPage);
+        when(productMapper.toDto(product)).thenReturn(productResponse);
+
+        // When
+        Page<ProductResponse> result = productService.getProductsByCategoryName("accessories", pageable);
+
+        // Then
+        assertThat(result).isNotNull();
+        assertThat(result.getContent()).hasSize(1);
+        verify(categoryRepository).findByNameIgnoreCase("accessories");
+        verify(productRepository).findByCategory(eq(10L), any(Pageable.class));
     }
 }

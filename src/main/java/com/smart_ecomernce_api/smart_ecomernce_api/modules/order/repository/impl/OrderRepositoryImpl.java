@@ -1,6 +1,8 @@
 package com.smart_ecomernce_api.smart_ecomernce_api.modules.order.repository.impl;
 
 import com.smart_ecomernce_api.smart_ecomernce_api.common.utils.JdbcUtils;
+import com.smart_ecomernce_api.smart_ecomernce_api.exception.InvalidDataException;
+import com.smart_ecomernce_api.smart_ecomernce_api.modules.order.dto.OrderStatsResponse;
 import com.smart_ecomernce_api.smart_ecomernce_api.modules.order.entity.*;
 import com.smart_ecomernce_api.smart_ecomernce_api.modules.order.repository.OrderRepository;
 import org.springframework.jdbc.core.RowMapper;
@@ -287,7 +289,7 @@ public class OrderRepositoryImpl implements OrderRepository {
     }
 
     @Override
-    public OrderStats getOrderStatistics() {
+    public OrderStatsResponse getOrderStatistics() {
         String countSql = """
             SELECT 
                 COUNT(*) as total_orders,
@@ -306,7 +308,7 @@ public class OrderRepositoryImpl implements OrderRepository {
         LocalDateTime startOfMonth = LocalDateTime.now().withDayOfMonth(1).withHour(0).withMinute(0).withSecond(0);
         BigDecimal monthlyRevenue = calculateRevenue(startOfMonth, LocalDateTime.now());
 
-        return OrderStats.builder()
+        return  OrderStatsResponse.builder()
                 .totalOrders(getLongValue(statsMap, "total_orders"))
                 .pendingOrders(getLongValue(statsMap, "pending_orders"))
                 .processingOrders(getLongValue(statsMap, "processing_orders"))
@@ -331,6 +333,13 @@ public class OrderRepositoryImpl implements OrderRepository {
 
     @Override
     public boolean deleteById(Long id) {
+        String deleteOrderItemsQuery = "DELETE FROM order_items WHERE order_id = ?";
+        JdbcUtils.QueryResult deleteOrderItemsResult = jdbcUtils.executePreparedQuery(deleteOrderItemsQuery, id);
+        if (deleteOrderItemsResult.hasError()) {
+            throw new InvalidDataException("Failed to delete order items for user with id " + id + ": " + deleteOrderItemsResult.getError());
+        }
+
+
         String sql = "DELETE FROM orders WHERE id = ?";
         JdbcUtils.QueryResult result = jdbcUtils.executePreparedQuery(sql, id);
         return result.getAffectedRows() > 0;
@@ -350,6 +359,18 @@ public class OrderRepositoryImpl implements OrderRepository {
         return count != null && count > 0;
     }
 
+    @Override
+    public void updateStatus(Long orderId, OrderStatus newStatus) {
+        String sql = "UPDATE orders SET status = ?, updated_at = ? WHERE id = ?";
+        jdbcUtils.executePreparedQuery(sql, newStatus.name(), LocalDateTime.now(), orderId);
+    }
+
+    @Override
+    public void updatePaymentStatus(Long orderId, PaymentStatus newStatus) {
+        String sql = "UPDATE orders SET payment_status = ?, updated_at = ? WHERE id = ?";
+        jdbcUtils.executePreparedQuery(sql, newStatus.name(), LocalDateTime.now(), orderId);
+    }
+
     /**
      * Helper method to safely extract Long values from Map
      */
@@ -367,3 +388,4 @@ public class OrderRepositoryImpl implements OrderRepository {
         return 0L;
     }
 }
+

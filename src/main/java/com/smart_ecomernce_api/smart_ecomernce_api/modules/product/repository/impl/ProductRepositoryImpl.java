@@ -2,6 +2,9 @@ package com.smart_ecomernce_api.smart_ecomernce_api.modules.product.repository.i
 
 import com.smart_ecomernce_api.smart_ecomernce_api.common.utils.JdbcUtils;
 import com.smart_ecomernce_api.smart_ecomernce_api.common.utils.JdbcUtils.QueryResult;
+import com.smart_ecomernce_api.smart_ecomernce_api.exception.InvalidDataException;
+import com.smart_ecomernce_api.smart_ecomernce_api.exception.ResourceNotFoundException;
+import com.smart_ecomernce_api.smart_ecomernce_api.modules.category.entity.Category;
 import com.smart_ecomernce_api.smart_ecomernce_api.modules.product.entity.InventoryStatus;
 import com.smart_ecomernce_api.smart_ecomernce_api.modules.product.entity.Product;
 import com.smart_ecomernce_api.smart_ecomernce_api.modules.product.repository.ProductRepository;
@@ -33,13 +36,15 @@ public class ProductRepositoryImpl implements ProductRepository {
     private static final String TABLE_NAME = "products";
 
     private static final String BASE_SELECT =
-            "SELECT id, name, description, slug, sku, price, discount_price, cost_price, " +
-                    "stock_quantity, reserved_quantity, low_stock_threshold, reorder_point, " +
-                    "reorder_quantity, max_stock_quantity, inventory_status, track_inventory, " +
-                    "allow_backorder, expected_restock_date, last_restocked_at, featured, is_new, " +
-                    "is_bestseller, image_url, thumbnail_url, category_id, is_active, created_at, updated_at, " +
-                    "(stock_quantity - reserved_quantity) as available_quantity " +
-                    "FROM " + TABLE_NAME;
+            "SELECT p.id, p.name, p.description, p.slug, p.sku, p.price, p.discount_price, p.cost_price, " +
+                    "p.stock_quantity, p.reserved_quantity, p.low_stock_threshold, p.reorder_point, " +
+                    "p.reorder_quantity, p.max_stock_quantity, p.inventory_status, p.track_inventory, " +
+                    "p.allow_backorder, p.expected_restock_date, p.last_restocked_at, p.featured, p.is_new, " +
+                    "p.is_bestseller, p.image_url, p.thumbnail_url, p.category_id, p.is_active, p.created_at, p.updated_at, " +
+                    "(p.stock_quantity - p.reserved_quantity) as available_quantity, " +
+                    "c.slug as category_slug, c.name as category_name " +
+                    "FROM " + TABLE_NAME + " p " +
+                    "LEFT JOIN categories c ON p.category_id = c.id";
 
     public ProductRepositoryImpl(JdbcUtils jdbcUtils) {
         this.jdbcUtils = jdbcUtils;
@@ -55,7 +60,7 @@ public class ProductRepositoryImpl implements ProductRepository {
         product.setDescription(rs.getString("description"));
         product.setSlug(rs.getString("slug"));
         product.setSku(rs.getString("sku"));
-        product.setPrice(rs.getBigDecimal("price"));
+        product.setPrice(rs.getBigDecimal("price") != null ? rs.getBigDecimal("price") : BigDecimal.ZERO);
         product.setDiscountPrice(rs.getBigDecimal("discount_price"));
         product.setCostPrice(rs.getBigDecimal("cost_price"));
 
@@ -94,8 +99,15 @@ public class ProductRepositoryImpl implements ProductRepository {
         product.setImageUrl(rs.getString("image_url"));
         product.setThumbnailUrl(rs.getString("thumbnail_url"));
 
-        // Category ID (not loading full category object to avoid circular dependencies)
-        // Note: You'll need to handle category loading separately if needed
+        // Map category with full details from joined table
+        Long categoryId = rs.getLong("category_id");
+        if (categoryId != null && categoryId > 0) {
+            Category category = new Category();
+            category.setId(categoryId);
+            category.setSlug(rs.getString("category_slug"));
+            category.setName(rs.getString("category_name"));
+            product.setCategory(category);
+        }
 
         product.setIsActive(rs.getBoolean("is_active"));
 
@@ -136,7 +148,7 @@ public class ProductRepositoryImpl implements ProductRepository {
 
     @Override
     public Optional<Product> findById(Long id) {
-        String query = BASE_SELECT + " WHERE id = ?";
+        String query = BASE_SELECT + " WHERE p.id = ?";
         List<Product> products = jdbcUtils.query(query, productRowMapper, id);
         return products.isEmpty() ? Optional.empty() : Optional.of(products.get(0));
     }
@@ -150,7 +162,8 @@ public class ProductRepositoryImpl implements ProductRepository {
 
     @Override
     public List<Product> findAll() {
-        return jdbcUtils.query(BASE_SELECT, productRowMapper);
+        String query = BASE_SELECT;
+        return jdbcUtils.query(query, productRowMapper);
     }
 
     @Override
@@ -186,7 +199,7 @@ public class ProductRepositoryImpl implements ProductRepository {
                 .map(id -> "?")
                 .collect(Collectors.joining(","));
 
-        String query = BASE_SELECT + " WHERE id IN (" + placeholders + ")";
+        String query = BASE_SELECT + " WHERE p.id IN (" + placeholders + ")";
         return jdbcUtils.query(query, productRowMapper, idList.toArray());
     }
 
@@ -200,11 +213,51 @@ public class ProductRepositoryImpl implements ProductRepository {
     @Override
     @Transactional
     public void deleteById(Long id) {
+        // First, delete associated product images
+        String deleteProductImagesQuery = "DELETE FROM product_images WHERE product_id = ?";
+        QueryResult imageResult = jdbcUtils.executePreparedQuery(deleteProductImagesQuery, id);
+
+        if (imageResult.hasError()) {
+            logger.error("Error deleting product images for product with id {}: {}", id, imageResult.getError());
+            throw new InvalidDataException("Failed to delete product images for product with id " + id + ": " + imageResult.getError());
+        }
+        logger.info("Deleted {} product image(s) for product with id: {}", imageResult.getAffectedRows(), id);
+
+        // Then, delete associated cart items to avoid foreign key constraints
+        String deleteCartItemsQuery = "DELETE FROM cart_items WHERE product_id = ?";
+        QueryResult cartResult = jdbcUtils.executePreparedQuery(deleteCartItemsQuery, id);
+
+        if (cartResult.hasError()) {
+            logger.error("Error deleting cart items for product with id {}: {}", id, cartResult.getError());
+            throw new InvalidDataException("Failed to delete cart items for product with id " + id + ": " + cartResult.getError());
+        }
+        logger.info("Deleted {} cart item(s) for product with id: {}", cartResult.getAffectedRows(), id);
+
+        // Then, delete associated wishlist items
+        String deleteWishlistItemsQuery = "DELETE FROM wishlist_items WHERE product_id = ?";
+        QueryResult wishlistResult = jdbcUtils.executePreparedQuery(deleteWishlistItemsQuery, id);
+
+        if (wishlistResult.hasError()) {
+            logger.error("Error deleting wishlist items for product with id {}: {}", id, wishlistResult.getError());
+            throw new InvalidDataException("Failed to delete wishlist items for product with id " + id + ": " + wishlistResult.getError());
+        }
+        logger.info("Deleted {} wishlist item(s) for product with id: {}", wishlistResult.getAffectedRows(), id);
+
+
         String query = "DELETE FROM " + TABLE_NAME + " WHERE id = ?";
         QueryResult result = jdbcUtils.executePreparedQuery(query, id);
-        if (!result.hasError()) {
-            logger.info("Deleted product with id: {}", id);
+
+        if (result.hasError()) {
+            logger.error("Error deleting product with id {}: {}", id, result.getError());
+            throw new InvalidDataException("Failed to delete product with id " + id + ": " + result.getError());
         }
+
+        if (result.getAffectedRows() <= 0) {
+            logger.warn("Delete product with id {} did not affect any rows", id);
+            throw new ResourceNotFoundException("Product not found with id: " + id);
+        }
+
+        logger.info("Deleted product with id: {}", id);
     }
 
     @Override
@@ -237,14 +290,14 @@ public class ProductRepositoryImpl implements ProductRepository {
 
     @Override
     public Optional<Product> findBySlug(String slug) {
-        String query = BASE_SELECT + " WHERE slug = ?";
+        String query = BASE_SELECT + " WHERE p.slug = ?";
         List<Product> products = jdbcUtils.query(query, productRowMapper, slug);
         return products.isEmpty() ? Optional.empty() : Optional.of(products.get(0));
     }
 
     @Override
     public Optional<Product> findBySku(String sku) {
-        String query = BASE_SELECT + " WHERE sku = ?";
+        String query = BASE_SELECT + " WHERE p.sku = ?";
         List<Product> products = jdbcUtils.query(query, productRowMapper, sku);
         return products.isEmpty() ? Optional.empty() : Optional.of(products.get(0));
     }
@@ -265,19 +318,19 @@ public class ProductRepositoryImpl implements ProductRepository {
 
     @Override
     public Optional<Product> findActiveById(Long id) {
-        String query = BASE_SELECT + " WHERE is_active = true AND id = ?";
+        String query = BASE_SELECT + " WHERE p.is_active = true AND p.id = ?";
         List<Product> products = jdbcUtils.query(query, productRowMapper, id);
         return products.isEmpty() ? Optional.empty() : Optional.of(products.get(0));
     }
 
     @Override
     public Page<Product> findFeaturedProducts(Pageable pageable) {
-        String countQuery = "SELECT COUNT(*) FROM " + TABLE_NAME +
-                " WHERE featured = true AND is_active = true";
+        String countQuery = "SELECT COUNT(*) FROM " + TABLE_NAME + " p" +
+                " WHERE p.featured = true AND p.is_active = true";
         Long total = jdbcUtils.queryForObject(countQuery, Long.class);
         long totalCount = total != null ? total : 0L;
 
-        String query = BASE_SELECT + " WHERE featured = true AND is_active = true" +
+        String query = BASE_SELECT + " WHERE p.featured = true AND p.is_active = true" +
                 buildOrderByClause(pageable.getSort()) +
                 " LIMIT ? OFFSET ?";
 
@@ -294,7 +347,7 @@ public class ProductRepositoryImpl implements ProductRepository {
         Long total = jdbcUtils.queryForObject(countQuery, Long.class, categoryId);
         long totalCount = total != null ? total : 0L;
 
-        String query = BASE_SELECT + " WHERE category_id = ? AND is_active = true" +
+        String query = BASE_SELECT + " WHERE p.category_id = ? AND p.is_active = true" +
                 buildOrderByClause(pageable.getSort()) +
                 " LIMIT ? OFFSET ?";
 
@@ -316,7 +369,7 @@ public class ProductRepositoryImpl implements ProductRepository {
         long totalCount = total != null ? total : 0L;
 
         String query = BASE_SELECT +
-                " WHERE is_active = true AND discount_price >= :minPrice AND discount_price <= :maxPrice" +
+                " WHERE p.is_active = true AND p.discount_price >= :minPrice AND p.discount_price <= :maxPrice" +
                 buildOrderByClause(pageable.getSort()) +
                 " LIMIT :limit OFFSET :offset";
 
@@ -333,13 +386,13 @@ public class ProductRepositoryImpl implements ProductRepository {
         Map<String, Object> params = new HashMap<>();
         params.put("search", "%" + search.toLowerCase() + "%");
 
-        String countQuery = "SELECT COUNT(*) FROM " + TABLE_NAME +
-                " WHERE is_active = true AND LOWER(name) LIKE :search";
+        String countQuery = "SELECT COUNT(*) FROM " + TABLE_NAME + " p" +
+                " WHERE p.is_active = true AND LOWER(p.name) LIKE :search";
         Long total = jdbcUtils.queryForObject(countQuery, Long.class, params);
         long totalCount = total != null ? total : 0L;
 
         String query = BASE_SELECT +
-                " WHERE is_active = true AND LOWER(name) LIKE :search" +
+                " WHERE p.is_active = true AND LOWER(p.name) LIKE :search" +
                 buildOrderByClause(pageable.getSort()) +
                 " LIMIT :limit OFFSET :offset";
 
@@ -356,15 +409,15 @@ public class ProductRepositoryImpl implements ProductRepository {
         Map<String, Object> params = new HashMap<>();
         params.put("keyword", "%" + keyword.toLowerCase() + "%");
 
-        String countQuery = "SELECT COUNT(*) FROM " + TABLE_NAME +
-                " WHERE is_active = true AND " +
-                "(LOWER(name) LIKE :keyword OR LOWER(description) LIKE :keyword)";
+        String countQuery = "SELECT COUNT(*) FROM " + TABLE_NAME + " p" +
+                " WHERE p.is_active = true AND " +
+                "(LOWER(p.name) LIKE :keyword OR LOWER(p.description) LIKE :keyword)";
         Long total = jdbcUtils.queryForObject(countQuery, Long.class, params);
         long totalCount = total != null ? total : 0L;
 
         String query = BASE_SELECT +
-                " WHERE is_active = true AND " +
-                "(LOWER(name) LIKE :keyword OR LOWER(description) LIKE :keyword)" +
+                " WHERE p.is_active = true AND " +
+                "(LOWER(p.name) LIKE :keyword OR LOWER(p.description) LIKE :keyword)" +
                 buildOrderByClause(pageable.getSort()) +
                 " LIMIT :limit OFFSET :offset";
 
@@ -385,17 +438,17 @@ public class ProductRepositoryImpl implements ProductRepository {
         params.put("maxPrice", maxPrice);
         params.put("search", "%" + search.toLowerCase() + "%");
 
-        String countQuery = "SELECT COUNT(*) FROM " + TABLE_NAME +
-                " WHERE is_active = true AND category_id = :categoryId " +
-                "AND discount_price >= :minPrice AND discount_price <= :maxPrice " +
-                "AND LOWER(name) LIKE :search";
+        String countQuery = "SELECT COUNT(*) FROM " + TABLE_NAME + " p" +
+                " WHERE p.is_active = true AND p.category_id = :categoryId " +
+                "AND p.discount_price >= :minPrice AND p.discount_price <= :maxPrice " +
+                "AND LOWER(p.name) LIKE :search";
         Long total = jdbcUtils.queryForObject(countQuery, Long.class, params);
         long totalCount = total != null ? total : 0L;
 
         String query = BASE_SELECT +
-                " WHERE is_active = true AND category_id = :categoryId " +
-                "AND discount_price >= :minPrice AND discount_price <= :maxPrice " +
-                "AND LOWER(name) LIKE :search" +
+                " WHERE p.is_active = true AND p.category_id = :categoryId " +
+                "AND p.discount_price >= :minPrice AND p.discount_price <= :maxPrice " +
+                "AND LOWER(p.name) LIKE :search" +
                 buildOrderByClause(pageable.getSort()) +
                 " LIMIT :limit OFFSET :offset";
 
@@ -413,6 +466,28 @@ public class ProductRepositoryImpl implements ProductRepository {
     public List<Product> findByInventoryStatus(InventoryStatus status) {
         String query = BASE_SELECT + " WHERE inventory_status = ?";
         return jdbcUtils.query(query, productRowMapper, status.name());
+    }
+
+    @Override
+    public Page<Product> findByInventoryStatus(InventoryStatus status, Pageable pageable) {
+        Map<String, Object> params = new HashMap<>();
+        params.put("status", status.name());
+
+        String countQuery = "SELECT COUNT(*) FROM " + TABLE_NAME +
+                " WHERE inventory_status = :status";
+        Long total = jdbcUtils.queryForObject(countQuery, Long.class, params);
+        long totalCount = total != null ? total : 0L;
+
+        String query = BASE_SELECT +
+                " WHERE p.inventory_status = :status" +
+                buildOrderByClause(pageable.getSort()) +
+                " LIMIT :limit OFFSET :offset";
+
+        params.put("limit", pageable.getPageSize());
+        params.put("offset", pageable.getOffset());
+
+        List<Product> products = jdbcUtils.query(query, productRowMapper, params);
+        return new PageImpl<>(products, pageable, totalCount);
     }
 
     @Override
@@ -437,6 +512,26 @@ public class ProductRepositoryImpl implements ProductRepository {
     }
 
     @Override
+    public Page<Product> findProductsNeedingReorder(Pageable pageable) {
+        String countQuery = "SELECT COUNT(*) FROM " + TABLE_NAME +
+                " WHERE stock_quantity <= reorder_point AND track_inventory = true AND is_active = true";
+        Long total = jdbcUtils.queryForObject(countQuery, Long.class);
+        long totalCount = total != null ? total : 0L;
+
+        Map<String, Object> params = new HashMap<>();
+        String query = BASE_SELECT +
+                " WHERE p.stock_quantity <= p.reorder_point AND p.track_inventory = true AND p.is_active = true" +
+                buildOrderByClause(pageable.getSort()) +
+                " LIMIT :limit OFFSET :offset";
+
+        params.put("limit", pageable.getPageSize());
+        params.put("offset", pageable.getOffset());
+
+        List<Product> products = jdbcUtils.query(query, productRowMapper, params);
+        return new PageImpl<>(products, pageable, totalCount);
+    }
+
+    @Override
     public Page<Product> findInStockProductsByCategory(Long categoryId, Pageable pageable) {
         Map<String, Object> params = new HashMap<>();
         params.put("categoryId", categoryId);
@@ -447,7 +542,7 @@ public class ProductRepositoryImpl implements ProductRepository {
         long totalCount = total != null ? total : 0L;
 
         String query = BASE_SELECT +
-                " WHERE category_id = :categoryId AND inventory_status IN ('IN_STOCK', 'LOW_STOCK') AND is_active = true" +
+                " WHERE p.category_id = :categoryId AND p.inventory_status IN ('IN_STOCK', 'LOW_STOCK') AND p.is_active = true" +
                 buildOrderByClause(pageable.getSort()) +
                 " LIMIT :limit OFFSET :offset";
 
@@ -587,7 +682,7 @@ public class ProductRepositoryImpl implements ProductRepository {
         Long total = jdbcUtils.queryForObject(countQuery, Long.class);
         long totalCount = total != null ? total : 0L;
 
-        String query = BASE_SELECT + " WHERE is_new = true AND is_active = true" +
+        String query = BASE_SELECT + " WHERE p.is_new = true AND p.is_active = true" +
                 buildOrderByClause(pageable.getSort()) +
                 " LIMIT ? OFFSET ?";
 
@@ -604,7 +699,7 @@ public class ProductRepositoryImpl implements ProductRepository {
         Long total = jdbcUtils.queryForObject(countQuery, Long.class);
         long totalCount = total != null ? total : 0L;
 
-        String query = BASE_SELECT + " WHERE is_bestseller = true AND is_active = true" +
+        String query = BASE_SELECT + " WHERE p.is_bestseller = true AND p.is_active = true" +
                 buildOrderByClause(pageable.getSort()) +
                 " LIMIT ? OFFSET ?";
 
@@ -622,7 +717,7 @@ public class ProductRepositoryImpl implements ProductRepository {
         long totalCount = total != null ? total : 0L;
 
         String query = BASE_SELECT +
-                " WHERE discount_price IS NOT NULL AND discount_price < price AND is_active = true" +
+                " WHERE p.discount_price IS NOT NULL AND p.discount_price < p.price AND p.is_active = true" +
                 buildOrderByClause(pageable.getSort()) +
                 " LIMIT ? OFFSET ?";
 
@@ -648,7 +743,7 @@ public class ProductRepositoryImpl implements ProductRepository {
         long totalCount = total != null ? total : 0L;
 
         String query = BASE_SELECT +
-                " WHERE category_id IN (" + placeholders + ") AND is_active = true" +
+                " WHERE p.category_id IN (" + placeholders + ") AND p.is_active = true" +
                 buildOrderByClause(pageable.getSort()) +
                 " LIMIT ? OFFSET ?";
 
@@ -680,15 +775,15 @@ public class ProductRepositoryImpl implements ProductRepository {
 
     @Override
     public List<Product> findByCreatedAtBetween(LocalDateTime startDate, LocalDateTime endDate) {
-        String query = BASE_SELECT + " WHERE created_at BETWEEN ? AND ?";
+        String query = BASE_SELECT + " WHERE p.created_at BETWEEN ? AND ?";
         return jdbcUtils.query(query, productRowMapper,
                 Timestamp.valueOf(startDate), Timestamp.valueOf(endDate));
     }
 
     @Override
     public Long countByCategory(Long categoryId) {
-        String query = "SELECT COUNT(*) FROM " + TABLE_NAME +
-                " WHERE category_id = ? AND is_active = true";
+        String query = "SELECT COUNT(*) FROM " + TABLE_NAME + " p" +
+                " WHERE p.category_id = ? AND p.is_active = true";
         Long count = jdbcUtils.queryForObject(query, Long.class, categoryId);
         return count != null ? count : 0L;
     }
@@ -850,7 +945,7 @@ public class ProductRepositoryImpl implements ProductRepository {
 
         while (iterator.hasNext()) {
             Sort.Order order = iterator.next();
-            orderBy.append(camelToSnake(order.getProperty()))
+            orderBy.append("p.").append(camelToSnake(order.getProperty()))
                     .append(" ")
                     .append(order.getDirection().name());
 

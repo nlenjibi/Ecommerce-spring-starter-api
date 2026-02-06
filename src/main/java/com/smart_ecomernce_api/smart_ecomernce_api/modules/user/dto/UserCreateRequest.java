@@ -39,5 +39,5 @@ public class UserCreateRequest {
     @Pattern(regexp = "^[+]?[0-9]{10,15}$", message = "Phone number format is invalid")
     private String phoneNumber;
 
-
+    private String role;
 }

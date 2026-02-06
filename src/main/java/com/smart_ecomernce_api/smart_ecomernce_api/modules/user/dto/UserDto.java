@@ -3,9 +3,11 @@ package com.smart_ecomernce_api.smart_ecomernce_api.modules.user.dto;
 import com.fasterxml.jackson.annotation.JsonFormat;
 
 import com.smart_ecomernce_api.smart_ecomernce_api.modules.user.entity.Role;
+import com.smart_ecomernce_api.smart_ecomernce_api.modules.user.entity.Address;
 import lombok.*;
 
 import java.time.LocalDateTime;
+import java.util.List;
 
 @Builder
 @AllArgsConstructor
@@ -30,4 +32,5 @@ public class UserDto {
     @JsonFormat(pattern = "yyyy-MM-dd'T'HH:mm:ss")
     private LocalDateTime updatedAt;
 
+    private List<Address> addresses;
 }

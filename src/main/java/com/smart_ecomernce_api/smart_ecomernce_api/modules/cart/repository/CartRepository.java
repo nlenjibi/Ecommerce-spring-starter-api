@@ -22,10 +22,13 @@ public interface CartRepository {
     Cart update(Cart cart);
 
 
-    Optional<Cart> findById(UUID id);
+    Optional<Cart> findById(Long id);
 
 
-    Optional<Cart> findByIdWithItems(UUID id);
+    Optional<Cart> findByIdWithItems(Long id);
+
+
+    Optional<Cart> findActiveCartByUserId(Long userId);
 
 
     List<Cart> findAbandonedCartsBefore(LocalDateTime cutoffDate);
@@ -35,24 +38,26 @@ public interface CartRepository {
     List<Cart> findEmptyCartsBefore(LocalDateTime cutoffDate);
 
 
-    boolean deleteById(UUID id);
+    boolean deleteById(Long id);
 
 
     CartItem saveCartItem(CartItem cartItem);
 
 
 
-    List<CartItem> findCartItemsByCartId(UUID cartId);
+    List<CartItem> findCartItemsByCartId(Long cartId);
 
 
-    int deleteCartItemsByCartId(UUID cartId);
+    int deleteCartItemsByCartId(Long cartId);
 
 
     long count();
 
 
-    boolean existsById(UUID id);
+    boolean existsById(Long id);
 
 
     List<Cart> findAll(int limit, int offset);
+
+    List<Cart> findAll();
 }

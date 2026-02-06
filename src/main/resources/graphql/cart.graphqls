@@ -5,7 +5,7 @@ enum CartStatus {
 }
 
 type Cart {
-    id: UUID!
+    id: ID!
     status: CartStatus!
     items: [CartItem!]!
     totalPrice: BigDecimal!
@@ -33,13 +33,14 @@ input UpdateCartItemInput {
 }
 
 extend type Query {
-    cart(id: UUID!): Cart
+    cart(id: ID!): Cart
 }
 
 extend type Mutation {
     createCart: Cart!
-    addItemToCart(cartId: UUID!, input: AddItemToCartInput!): CartItem!
-    updateCartItem(cartId: UUID!, productId: ID!, input: UpdateCartItemInput!): CartItem!
-    removeCartItem(cartId: UUID!, productId: ID!): Boolean!
-    clearCart(cartId: UUID!): Boolean!
+    addItemToCart(cartId: ID!, input: AddItemToCartInput!): CartItem!
+    updateCartItem(cartId: ID!, productId: ID!, input: UpdateCartItemInput!): CartItem!
+    removeCartItem(cartId: ID!, productId: ID!): Boolean!
+    clearCart(cartId: ID!): Boolean!
+    mergeCart(guestCartId: ID!): Cart!
 }

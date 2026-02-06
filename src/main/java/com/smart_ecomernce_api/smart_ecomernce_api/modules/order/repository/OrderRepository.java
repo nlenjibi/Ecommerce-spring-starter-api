@@ -1,7 +1,7 @@
 package com.smart_ecomernce_api.smart_ecomernce_api.modules.order.repository;
 
+import com.smart_ecomernce_api.smart_ecomernce_api.modules.order.dto.OrderStatsResponse;
 import com.smart_ecomernce_api.smart_ecomernce_api.modules.order.entity.Order;
-import com.smart_ecomernce_api.smart_ecomernce_api.modules.order.entity.OrderStats;
 import com.smart_ecomernce_api.smart_ecomernce_api.modules.order.entity.OrderStatus;
 import com.smart_ecomernce_api.smart_ecomernce_api.modules.order.entity.PaymentStatus;
 
@@ -100,7 +100,7 @@ public interface OrderRepository {
     /**
      * Get order statistics
      */
-    OrderStats getOrderStatistics();
+    OrderStatsResponse getOrderStatistics();
 
     /**
      * Check if user has purchased a product
@@ -121,4 +121,8 @@ public interface OrderRepository {
      * Check if order number exists
      */
     boolean existsByOrderNumber(String orderNumber);
+
+    void updateStatus(Long orderId, OrderStatus newStatus);
+
+    void updatePaymentStatus(Long orderId, PaymentStatus newStatus);
 }

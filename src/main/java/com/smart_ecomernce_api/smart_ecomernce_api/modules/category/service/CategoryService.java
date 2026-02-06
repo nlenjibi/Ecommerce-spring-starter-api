@@ -13,6 +13,10 @@ public interface CategoryService {
 
     CategoryResponse createCategory(CategoryCreateRequest request);
 
+    CategoryResponse createParentCategory(CategoryCreateRequest request);
+
+    CategoryResponse createChildCategory(CategoryCreateRequest request);
+
     CategoryResponse getCategoryById(Long id, boolean includeChildren);
 
     CategoryResponse getCategoryBySlug(String slug, boolean includeChildren);
@@ -31,4 +35,5 @@ public interface CategoryService {
 
     void deleteCategory(Long id, boolean reassignChildren);
 
+    List<CategoryResponse> searchCategoriesByName(String searchTerm);
 }

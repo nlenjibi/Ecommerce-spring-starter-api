@@ -167,7 +167,7 @@ public class Product extends BaseEntity {
     private String thumbnailUrl;
 
     @ElementCollection
-    @CollectionTable(name = "product_images", joinColumns = @JoinColumn(name = "product_id"))
+    @CollectionTable(name = "product_additional_images", joinColumns = @JoinColumn(name = "product_id"))
     @Column(name = "image_url")
     @Builder.Default
     private List<String> additionalImages = new ArrayList<>();
@@ -177,9 +177,12 @@ public class Product extends BaseEntity {
     @NotNull(message = "Category is required")
     private Category category;
 
-    @OneToMany(mappedBy = "product", cascade = CascadeType.ALL, orphanRemoval = true, fetch = FetchType.LAZY)
+    @OneToMany(mappedBy = "product", cascade = CascadeType.ALL, orphanRemoval = true)
     @Builder.Default
-    private List<OrderItem> orderItems = new ArrayList<>();
+    private List<ProductImage> images = new ArrayList<>();
+
+    @OneToMany(mappedBy = "product", cascade = CascadeType.ALL, orphanRemoval = true)
+    private List<OrderItem> orderItems;
 
     /**
      * Available quantity (stock - reserved)
@@ -446,4 +449,19 @@ public class Product extends BaseEntity {
             );
         }
     }
+
+    public void addImage(ProductImage image) {
+        if (image != null) {
+            image.setProduct(this);
+            this.images.add(image);
+        }
+    }
+
+    public void removeImage(ProductImage image) {
+        if (image != null) {
+            image.setProduct(null);
+            this.images.remove(image);
+        }
+    }
 }
+

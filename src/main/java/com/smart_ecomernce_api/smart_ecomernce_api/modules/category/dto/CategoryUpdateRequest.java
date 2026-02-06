@@ -31,4 +31,6 @@ public class CategoryUpdateRequest {
 
     @Min(value = 0, message = "Display order must be non-negative")
     private Integer displayOrder;
+
+    private String slug;
 }

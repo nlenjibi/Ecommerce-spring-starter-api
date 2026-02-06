@@ -1,5 +1,6 @@
 package com.smart_ecomernce_api.smart_ecomernce_api.modules.user.dto;
 
+import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
 import jakarta.validation.constraints.Email;
 import jakarta.validation.constraints.Pattern;
 import jakarta.validation.constraints.Size;
@@ -23,4 +24,6 @@ public class UserUpdateRequest {
 
     @Pattern(regexp = "^[+]?[0-9]{10,15}$", message = "Phone number format is invalid")
     private String phoneNumber;
+
+    private String role;
 }

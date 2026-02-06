@@ -128,6 +128,28 @@ public class Order extends BaseEntity {
     @Column(name = "refund_reason", columnDefinition = "TEXT")
     private String refundReason;
 
+    @Enumerated(EnumType.STRING)
+    @Column(name = "shipping_method", length = 30)
+    private ShippingMethod shippingMethod;
+
+    @Column(name = "shipping_address", columnDefinition = "TEXT")
+    private String shippingAddress;
+
+    @Column(name = "tracking_number", length = 100)
+    private String trackingNumber;
+
+    @Column(name = "carrier", length = 50)
+    private String carrier;
+
+    @Column(name = "shipped_at")
+    private LocalDateTime shippedAt;
+
+    @Column(name = "estimated_delivery_date")
+    private LocalDateTime estimatedDeliveryDate;
+
+    @Column(name = "customer_notes", columnDefinition = "TEXT")
+    private String customerNotes;
+
 
     public static Order fromCart(Cart cart, User customer) {
         if (cart == null) {
@@ -159,7 +181,7 @@ public class Order extends BaseEntity {
                     .product(cartItem.getProduct())
                     .productName(cartItem.getProduct().getName())
                     .quantity(cartItem.getQuantity())
-                    .unitPrice(cartItem.getUnitPrice())
+                    .unitPrice(cartItem.getTotalPrice())
                     .build();
 
             order.addOrderItem(orderItem);
@@ -296,6 +318,7 @@ public class Order extends BaseEntity {
             throw new IllegalStateException("Only processing orders can be shipped");
         }
         this.status = OrderStatus.SHIPPED;
+        this.shippedAt = LocalDateTime.now();
     }
 
     /**

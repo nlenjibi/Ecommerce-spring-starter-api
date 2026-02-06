@@ -155,6 +155,11 @@ public interface ProductRepository {
     List<Product> findByInventoryStatus(InventoryStatus status);
 
     /**
+     * Find products by inventory status with pagination
+     */
+    Page<Product> findByInventoryStatus(InventoryStatus status, Pageable pageable);
+
+    /**
      * Find low stock products
      */
     List<Product> findLowStockProducts();
@@ -168,6 +173,11 @@ public interface ProductRepository {
      * Find products needing reorder
      */
     List<Product> findProductsNeedingReorder();
+
+    /**
+     * Find products needing reorder with pagination
+     */
+    Page<Product> findProductsNeedingReorder(Pageable pageable);
 
     /**
      * Find in-stock products by category
@@ -259,3 +269,4 @@ public interface ProductRepository {
      */
     int batchUpdate(List<Product> products);
 }
+

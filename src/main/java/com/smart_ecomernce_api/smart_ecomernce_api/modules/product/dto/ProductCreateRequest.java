@@ -29,7 +29,7 @@ public class ProductCreateRequest {
     @DecimalMin(value = "0.01", message = "Price must be greater than 0")
     private BigDecimal price;
 
-    @NotNull(message = "Discounted price is required")
+
     @DecimalMin(value = "0.00", message = "Discounted price cannot be negative")
     private BigDecimal discountedPrice;
 
@@ -44,4 +44,10 @@ public class ProductCreateRequest {
     @NotNull(message = "Category ID is required")
     @Positive(message = "Category ID must be positive")
     private Long categoryId;
+
+    private Boolean isActive;
+
+    private String imageUrl;
+
+    private java.util.List<String> imageUrls;
 }

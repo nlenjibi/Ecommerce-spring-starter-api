@@ -35,9 +35,50 @@ public class CategoryServiceImpl implements CategoryService {
 
     @Override
     @Transactional
-    @CacheEvict(value = "categories", allEntries = true)
     public CategoryResponse createCategory(CategoryCreateRequest request) {
-        log.info("Creating category: name={}, parentId={}", request.getName(), request.getParentId());
+        if (hasParentId(request.getParentId())) {
+            return createChildCategory(request);
+        }
+
+        return createParentCategory(request);
+    }
+
+    @Override
+    @Transactional
+    public CategoryResponse createParentCategory(CategoryCreateRequest request) {
+        if (hasParentId(request.getParentId())) {
+            throw new InvalidDataException("Parent category ID is not allowed for parent category creation");
+        }
+
+        Category category = prepareCategoryForCreate(request, null);
+        Category savedCategory = categoryRepository.saveParentCategory(category);
+        log.info("Parent category created: id={}, slug={}", savedCategory.getId(), savedCategory.getSlug());
+        return categoryMapper.toResponse(savedCategory, false);
+    }
+
+    @Override
+    @Transactional
+    public CategoryResponse createChildCategory(CategoryCreateRequest request) {
+        if (!hasParentId(request.getParentId())) {
+            throw new InvalidDataException("Parent category ID is required for child category creation");
+        }
+
+        Category parent = categoryRepository.findById(request.getParentId())
+                .orElseThrow(() -> new ResourceNotFoundException(
+                        "Parent category not found with id: " + request.getParentId()));
+
+        if (!parent.getIsActive()) {
+            throw new InvalidDataException("Cannot assign inactive parent category");
+        }
+
+        Category category = prepareCategoryForCreate(request, parent);
+        Category savedCategory = categoryRepository.saveChildCategory(category);
+        log.info("Child category created: id={}, slug={}", savedCategory.getId(), savedCategory.getSlug());
+        return categoryMapper.toResponse(savedCategory, false);
+    }
+
+    private Category prepareCategoryForCreate(CategoryCreateRequest request, Category parent) {
+        log.info("Preparing category for create: name={}, parentId={}", request.getName(), request.getParentId());
 
         // Validate name uniqueness
         if (categoryRepository.existsByNameIgnoreCase(request.getName())) {
@@ -48,34 +89,16 @@ public class CategoryServiceImpl implements CategoryService {
         String baseSlug = slugGenerator.generateSlug(request.getName());
         String uniqueSlug = generateUniqueSlug(baseSlug);
 
-        // Create category entity
         Category category = categoryMapper.toEntity(request);
         category.setSlug(uniqueSlug);
         category.setDisplayOrder(request.getDisplayOrder() != null ? request.getDisplayOrder() : 0);
+        category.setParent(parent);
 
-        // Set parent if provided
-        if (request.getParentId() != null) {
-            Category parent = categoryRepository.findById(request.getParentId())
-                    .orElseThrow(() -> new ResourceNotFoundException(
-                            "Parent category not found with id: " + request.getParentId()));
-
-            // Optionally validate parent is active
-            if (!parent.getIsActive()) {
-                throw new InvalidDataException("Cannot assign inactive parent category");
-            }
-
-            category.setParent(parent);
-        }
-
-        Category savedCategory = categoryRepository.save(category);
-        log.info("Category created: id={}, slug={}", savedCategory.getId(), savedCategory.getSlug());
-
-        return categoryMapper.toResponse(savedCategory, false);
+        return category;
     }
 
     @Override
     @Transactional(readOnly = true)
-    @Cacheable(value = "categories", key = "#id + '-' + #includeChildren")
     public CategoryResponse getCategoryById(Long id, boolean includeChildren) {
         Category category = categoryRepository.findById(id)
                 .orElseThrow(() -> new ResourceNotFoundException("Category not found with id: " + id));
@@ -87,7 +110,6 @@ public class CategoryServiceImpl implements CategoryService {
 
     @Override
     @Transactional(readOnly = true)
-    @Cacheable(value = "categories", key = "'slug-' + #slug + '-' + #includeChildren")
     public CategoryResponse getCategoryBySlug(String slug, boolean includeChildren) {
         log.debug("Fetching category by slug: {}", slug);
         Category category = categoryRepository.findBySlug(slug)
@@ -132,7 +154,6 @@ public class CategoryServiceImpl implements CategoryService {
 
     @Override
     @Transactional(readOnly = true)
-    @Cacheable(value = "categories", key = "'active-all'")
     public List<CategoryResponse> getAllActiveCategories() {
         return categoryRepository.findAllActive().stream()
                 .map(category -> categoryMapper.toResponse(category, false))
@@ -141,7 +162,6 @@ public class CategoryServiceImpl implements CategoryService {
 
     @Override
     @Transactional(readOnly = true)
-    @Cacheable(value = "categories", key = "'root-' + #includeChildren")
     public List<CategoryResponse> getRootCategories(boolean includeChildren) {
         List<Category> rootCategories = categoryRepository.findActiveRootCategories();
         return rootCategories.stream()
@@ -165,7 +185,6 @@ public class CategoryServiceImpl implements CategoryService {
 
     @Override
     @Transactional(readOnly = true)
-    @Cacheable(value = "categories", key = "'hierarchy'")
     public List<CategoryResponse> getFullHierarchy() {
         List<Category> rootCategories = categoryRepository.findActiveRootCategories();
         return rootCategories.stream()
@@ -175,7 +194,6 @@ public class CategoryServiceImpl implements CategoryService {
 
     @Override
     @Transactional
-    @CacheEvict(value = "categories", allEntries = true)
     public CategoryResponse updateCategory(Long id, CategoryUpdateRequest request) {
         Category category = categoryRepository.findById(id)
                 .orElseThrow(() -> new ResourceNotFoundException("Category not found with id: " + id));
@@ -208,27 +226,31 @@ public class CategoryServiceImpl implements CategoryService {
 
         // Update parent relationship
         if (request.getParentId() != null) {
-            // Prevent self-reference
-            if (request.getParentId().equals(id)) {
-                throw new InvalidDataException("Category cannot be its own parent");
+            if (!hasParentId(request.getParentId())) {
+                category.setParent(null);
+            } else {
+                // Prevent self-reference
+                if (request.getParentId().equals(id)) {
+                    throw new InvalidDataException("Category cannot be its own parent");
+                }
+
+                // Prevent circular reference
+                if (wouldCreateCircularReference(id, request.getParentId())) {
+                    throw new InvalidDataException("Cannot set parent: would create circular reference");
+                }
+
+                Category newParent = categoryRepository.findById(request.getParentId())
+                        .orElseThrow(() -> new ResourceNotFoundException(
+                                "Parent category not found with id: " + request.getParentId()));
+
+                category.setParent(newParent);
             }
-
-            // Prevent circular reference
-            if (wouldCreateCircularReference(id, request.getParentId())) {
-                throw new InvalidDataException("Cannot set parent: would create circular reference");
-            }
-
-            Category newParent = categoryRepository.findById(request.getParentId())
-                    .orElseThrow(() -> new ResourceNotFoundException(
-                            "Parent category not found with id: " + request.getParentId()));
-
-            category.setParent(newParent);
         } else if (request.getParentId() == null && category.getParent() != null) {
             // Explicitly set to null to make it a root category
             category.setParent(null);
         }
 
-        Category updatedCategory = categoryRepository.save(category);
+        Category updatedCategory = categoryRepository.update(category);
         log.info("Category updated: id={}, name={}", id, updatedCategory.getName());
 
         return categoryMapper.toResponse(updatedCategory, false);
@@ -236,7 +258,6 @@ public class CategoryServiceImpl implements CategoryService {
 
     @Override
     @Transactional
-    @CacheEvict(value = "categories", allEntries = true)
     public CategoryResponse toggleCategoryStatus(Long id, boolean isActive) {
         Category category = categoryRepository.findById(id)
                 .orElseThrow(() -> new ResourceNotFoundException("Category not found with id: " + id));
@@ -249,7 +270,7 @@ public class CategoryServiceImpl implements CategoryService {
             children.forEach(child -> child.setIsActive(false));
         }
 
-        Category savedCategory = categoryRepository.save(category);
+        Category savedCategory = categoryRepository.update(category);
         log.info("Category status updated: id={}, isActive={}", id, isActive);
 
         return categoryMapper.toResponse(savedCategory, false);
@@ -257,36 +278,30 @@ public class CategoryServiceImpl implements CategoryService {
 
     @Override
     @Transactional
-    @CacheEvict(value = "categories", allEntries = true)
     public void deleteCategory(Long id, boolean reassignChildren) {
         Category category = categoryRepository.findById(id)
                 .orElseThrow(() -> new ResourceNotFoundException("Category not found with id: " + id));
 
-        // Check if category has product
-        Long productCount = categoryRepository.countProductsByCategoryId(id);
-        if (productCount > 0) {
-            throw new InvalidDataException(
-                    "Cannot delete category with " + productCount + " product. " +
-                            "Please reassign or delete product first.");
+        // Hard delete: do NOT reassign children anymore. Delete subtree.
+        // Block deletion if this category or ANY descendant has products.
+        long productCount = categoryRepository.countProductsByCategoryId(id);
+
+        List<Category> descendants = categoryRepository.findAllDescendants(id);
+        for (Category descendant : descendants) {
+            if (descendant.getId() == null) {
+                continue;
+            }
+            productCount += categoryRepository.countProductsByCategoryId(descendant.getId());
         }
 
-        // Handle children
-        if (categoryRepository.hasChildren(id)) {
-            if (reassignChildren) {
-                // Reassign children to this category's parent
-                List<Category> children = categoryRepository.findByParentId(id);
-                Category newParent = category.getParent();
-                children.forEach(child -> child.setParent(newParent));
-                children.forEach(categoryRepository::save);
-                log.info("Reassigned {} children to parent", children.size());
-            } else {
-                // Cascade delete handled by orphanRemoval in entity
-                log.info("Deleting category with children (cascade)");
-            }
+        if (productCount > 0) {
+            throw new InvalidDataException(
+                    "Cannot delete category because it (or its subcategories) contains " + productCount + " product(s). " +
+                            "Please reassign or delete products first.");
         }
 
         categoryRepository.deleteById(category.getId());
-        log.info("Category deleted: id={}, name={}", id, category.getName());
+        log.info("Category deleted (hard delete): id={}, name={}", id, category.getName());
     }
 
     /**
@@ -320,4 +335,23 @@ public class CategoryServiceImpl implements CategoryService {
         return uniqueSlug;
     }
 
+    private boolean hasParentId(Long parentId) {
+        return parentId != null && parentId > 0;
+    }
+
+    @Override
+    @Transactional(readOnly = true)
+    public List<CategoryResponse> searchCategoriesByName(String searchTerm) {
+        if (searchTerm == null || searchTerm.trim().isEmpty()) {
+            return List.of();
+        }
+
+        return categoryRepository.searchByName(searchTerm.trim()).stream()
+                .map(category -> {
+                    CategoryResponse response = categoryMapper.toResponse(category, false);
+                    response.setProductCount(categoryRepository.countProductsByCategoryId(category.getId()));
+                    return response;
+                })
+                .collect(Collectors.toList());
+    }
 }

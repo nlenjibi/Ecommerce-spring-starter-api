@@ -32,16 +32,30 @@ public class CategoryController {
 
     private final CategoryService categoryService;
 
-    @PostMapping
-    @Operation(summary = "Create a new category", description = "Create a new product category with optional parent")
-    public ResponseEntity<ApiResponse<CategoryResponse>> createCategory(
+
+
+    @PostMapping("/parent")
+    @Operation(summary = "Create a parent category", description = "Create a top-level category with no parent")
+    public ResponseEntity<ApiResponse<CategoryResponse>> createParentCategory(
             @Valid @RequestBody CategoryCreateRequest request,
             UriComponentsBuilder uriBuilder) {
-        CategoryResponse response = categoryService.createCategory(request);
+        CategoryResponse response = categoryService.createParentCategory(request);
         var uri = uriBuilder.path("/api/v1/categories/{id}")
                 .buildAndExpand(response.getId()).toUri();
         return ResponseEntity.created(uri)
-                .body(ApiResponse.success("Category created successfully", response));
+                .body(ApiResponse.success("Parent category created successfully", response));
+    }
+
+    @PostMapping("/child")
+    @Operation(summary = "Create a child category", description = "Create a category under a parent category")
+    public ResponseEntity<ApiResponse<CategoryResponse>> createChildCategory(
+            @Valid @RequestBody CategoryCreateRequest request,
+            UriComponentsBuilder uriBuilder) {
+        CategoryResponse response = categoryService.createChildCategory(request);
+        var uri = uriBuilder.path("/api/v1/categories/{id}")
+                .buildAndExpand(response.getId()).toUri();
+        return ResponseEntity.created(uri)
+                .body(ApiResponse.success("Child category created successfully", response));
     }
 
     @GetMapping("/{id}")
@@ -160,5 +174,18 @@ public class CategoryController {
             @RequestParam(defaultValue = "true") boolean reassignChildren) {
         categoryService.deleteCategory(id, reassignChildren);
         return ResponseEntity.ok(ApiResponse.success("Category deleted successfully", null));
+    }
+
+    @GetMapping("/search")
+    @Operation(summary = "Search categories by name", description = "Search categories by name. Accepts 'name' (preferred) or legacy 'query'.")
+    public ResponseEntity<ApiResponse<List<CategoryResponse>>> searchCategoriesByName(
+            @Parameter(description = "Search term (preferred)")
+            @RequestParam(required = false) String name,
+            @Parameter(description = "Search term (legacy alias of name)")
+            @RequestParam(required = false, name = "query") String query) {
+
+        String term = (name != null && !name.isBlank()) ? name : query;
+        List<CategoryResponse> response = categoryService.searchCategoriesByName(term);
+        return ResponseEntity.ok(ApiResponse.success("Categories retrieved successfully", response));
     }
 }

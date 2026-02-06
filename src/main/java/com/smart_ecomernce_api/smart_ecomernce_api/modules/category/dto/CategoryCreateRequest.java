@@ -30,4 +30,5 @@ public class CategoryCreateRequest {
 
     @Min(value = 0, message = "Display order must be non-negative")
     private Integer displayOrder;
+
 }

@@ -28,6 +28,7 @@ public interface OrderService {
         // Update Operations
         OrderResponse updateOrderStatus(Long id, OrderUpdateRequest request);
         OrderResponse updatePaymentStatus(Long orderId, String status);
+        OrderResponse updateOrderAsCustomer(Long id, OrderUpdateRequest request, Long userId);
 
         // Order Actions
         OrderResponse confirmOrder(Long id);
@@ -38,4 +39,8 @@ public interface OrderService {
 
         // Statistics
         OrderStatsResponse getOrderStatistics();
-    }
+
+        void deleteOrder(Long orderId);
+
+        OrderResponse getOrderByIdAsAdmin(Long id);
+}

@@ -1,13 +1,15 @@
 package com.smart_ecomernce_api.smart_ecomernce_api.modules.user.controller;
 
-
 import com.smart_ecomernce_api.smart_ecomernce_api.common.response.ApiResponse;
 import com.smart_ecomernce_api.smart_ecomernce_api.common.response.PaginatedResponse;
-import com.smart_ecomernce_api.smart_ecomernce_api.common.utils.SecurityUtils;
-import com.smart_ecomernce_api.smart_ecomernce_api.modules.product.dto.ProductResponse;
+import com.smart_ecomernce_api.smart_ecomernce_api.modules.user.dto.ChangePasswordRequest;
+import com.smart_ecomernce_api.smart_ecomernce_api.modules.user.dto.LoginResponse;
 import com.smart_ecomernce_api.smart_ecomernce_api.modules.user.dto.UserCreateRequest;
 import com.smart_ecomernce_api.smart_ecomernce_api.modules.user.dto.UserDto;
+import com.smart_ecomernce_api.smart_ecomernce_api.modules.user.dto.UserLoginRequest;
 import com.smart_ecomernce_api.smart_ecomernce_api.modules.user.dto.UserUpdateRequest;
+import com.smart_ecomernce_api.smart_ecomernce_api.modules.user.dto.UpdateUserRoleRequest;
+import com.smart_ecomernce_api.smart_ecomernce_api.modules.user.entity.Address;
 import com.smart_ecomernce_api.smart_ecomernce_api.modules.user.service.UserService;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.Parameter;
@@ -23,7 +25,7 @@ import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 import org.springframework.web.util.UriComponentsBuilder;
 
-import java.lang.reflect.Field;
+import java.util.List;
 import java.util.Optional;
 
 @RestController("moduleUserController")
@@ -87,6 +89,20 @@ public class UserController {
                 .body(ApiResponse.success("User created successfully", created));
     }
 
+    @PostMapping("/auth/login")
+    @Operation(summary = "Login user")
+    public ResponseEntity<ApiResponse<LoginResponse>> login(@Valid @RequestBody UserLoginRequest request) {
+        LoginResponse loggedIn = userService.login(request);
+        return ResponseEntity.ok(ApiResponse.success("Login successful", loggedIn));
+    }
+
+    @PatchMapping("/{id}/password")
+    @Operation(summary = "Change user password")
+    public ResponseEntity<ApiResponse<Void>> changePassword(@PathVariable Long id, @Valid @RequestBody ChangePasswordRequest request) {
+        userService.changePassword(id, request);
+        return ResponseEntity.ok(ApiResponse.success("Password changed successfully", null));
+    }
+
     @PutMapping("/{id}")
     @Operation(summary = "Update user by ID")
     public ResponseEntity<ApiResponse<UserDto>> updateUser(@PathVariable Long id, @Valid @RequestBody UserUpdateRequest request) {
@@ -99,10 +115,35 @@ public class UserController {
     @Operation(summary = "Delete user by ID")
     public ResponseEntity<ApiResponse<Void>> deleteUser(@PathVariable Long id) {
         userService.deleteUser(id);
-        return ResponseEntity.status(HttpStatus.NO_CONTENT)
-                .body(ApiResponse.success("User deleted successfully", null));
+        return ResponseEntity.ok(ApiResponse.success("User deleted successfully", null));
     }
 
+    @PatchMapping("/{id}/role")
+    @Operation(summary = "Update user role by ID")
+    public ResponseEntity<ApiResponse<UserDto>> updateUserRole(@PathVariable Long id, @Valid @RequestBody UpdateUserRoleRequest request) {
+        UserDto updated = userService.updateUserRole(id, request);
+        return ResponseEntity.ok(ApiResponse.success("User role updated successfully", updated));
+    }
 
+    @PostMapping("/auth/register")
+    @Operation(summary = "Register user")
+    public ResponseEntity<ApiResponse<UserDto>> registerUser(@Valid @RequestBody UserCreateRequest request, UriComponentsBuilder uriBuilder) {
+        UserDto created = userService.createUser(request);
+        var uri = uriBuilder.path("/api/users/{id}").buildAndExpand(created.getId()).toUri();
+        return ResponseEntity.created(uri)
+                .body(ApiResponse.success("User registered successfully", created));
+    }
 
+    @GetMapping("/{id}/addresses")
+    @Operation(summary = "Get all addresses for a user")
+    public ResponseEntity<ApiResponse<List<Address>>> getUserAddresses(@PathVariable Long id) {
+        Optional<UserDto> userOpt = userService.getUserById(id);
+        if (userOpt.isEmpty()) {
+            return ResponseEntity.status(HttpStatus.NOT_FOUND)
+                    .body(ApiResponse.error("User not found with id: " + id));
+        }
+        UserDto user = userOpt.get();
+        List<Address> addresses = user.getAddresses();
+        return ResponseEntity.ok(ApiResponse.success("User addresses fetched successfully", addresses));
+    }
 }

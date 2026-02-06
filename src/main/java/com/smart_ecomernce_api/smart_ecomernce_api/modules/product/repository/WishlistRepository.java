@@ -12,197 +12,208 @@ import java.util.List;
 import java.util.Optional;
 
 /**
- * Custom WishlistRepository interface for JDBC-based implementation
- * No JPA dependencies - pure JDBC operations
+ * Enhanced WishlistRepository interface for JDBC-based implementation
+ * Supports both authenticated users and guest sessions
  */
 public interface WishlistRepository {
 
     // ==================== Basic CRUD Operations ====================
 
-    /**
-     * Save a wishlist item (insert if new, update if existing)
-     */
     WishlistItem save(WishlistItem wishlistItem);
 
-    /**
-     * Save multiple wishlist items
-     */
     List<WishlistItem> saveAll(Iterable<WishlistItem> wishlistItems);
 
-    /**
-     * Find wishlist item by ID
-     */
     Optional<WishlistItem> findById(Long id);
 
-    /**
-     * Check if wishlist item exists by ID
-     */
     boolean existsById(Long id);
 
-    /**
-     * Find all wishlist items
-     */
     List<WishlistItem> findAll();
 
-    /**
-     * Find all wishlist items with sorting
-     */
     List<WishlistItem> findAll(Sort sort);
 
-    /**
-     * Find all wishlist items with pagination
-     */
     Page<WishlistItem> findAll(Pageable pageable);
 
-    /**
-     * Find all wishlist items by IDs
-     */
     List<WishlistItem> findAllById(Iterable<Long> ids);
 
-    /**
-     * Count total number of wishlist items
-     */
     long count();
 
-    /**
-     * Delete wishlist item by ID
-     */
     void deleteById(Long id);
 
-    /**
-     * Delete a wishlist item
-     */
     void delete(WishlistItem wishlistItem);
 
-    /**
-     * Delete wishlist items by IDs
-     */
     void deleteAllById(Iterable<Long> ids);
 
-    /**
-     * Delete multiple wishlist items
-     */
     void deleteAll(Iterable<WishlistItem> wishlistItems);
 
-    /**
-     * Delete all wishlist items
-     */
     void deleteAll();
 
-    // ==================== Custom Query Methods ====================
+    // ==================== User Wishlist Queries ====================
 
-    /**
-     * Find all wishlist items for a user, ordered by creation date descending
-     */
     List<WishlistItem> findByUserIdOrderByCreatedAtDesc(Long userId);
 
-    /**
-     * Find all wishlist items for a user with pagination
-     */
     Page<WishlistItem> findByUserId(Long userId, Pageable pageable);
 
-    /**
-     * Find wishlist item by user and product
-     */
     Optional<WishlistItem> findByUserIdAndProductId(Long userId, Long productId);
 
-    /**
-     * Check if product is in user's wishlist
-     */
     boolean existsByUserIdAndProductId(Long userId, Long productId);
 
-    /**
-     * Find items with price drops for a user
-     */
-    List<WishlistItem> findItemsWithPriceDrops(Long userId);
-
-    /**
-     * Find items that need stock notification
-     */
-    List<WishlistItem> findItemsNeedingStockNotification(Long userId);
-
-    /**
-     * Find items that need price drop notification
-     */
-    List<WishlistItem> findItemsNeedingPriceNotification(Long userId);
-
-    /**
-     * Delete all wishlist items for a user
-     */
     void deleteByUserId(Long userId);
 
-    /**
-     * Find wishlist items by priority
-     */
-    List<WishlistItem> findByUserIdAndPriority(Long userId, WishlistPriority priority);
+    void deleteByUserIdAndProductId(Long userId, Long productId);
 
-    /**
-     * Find unpurchased wishlist items for a user
-     */
-    List<WishlistItem> findUnpurchasedByUserId(Long userId);
-
-    /**
-     * Find purchased wishlist items for a user
-     */
-    List<WishlistItem> findPurchasedByUserId(Long userId);
-
-    /**
-     * Count wishlist items for a user
-     */
     Long countByUserId(Long userId);
 
-    /**
-     * Count unpurchased items for a user
-     */
     Long countUnpurchasedByUserId(Long userId);
 
-    /**
-     * Find public wishlist items for a user
-     */
-    List<WishlistItem> findPublicItemsByUserId(Long userId);
+    // ==================== Guest Wishlist Queries ====================
 
-    /**
-     * Mark wishlist item as purchased
-     */
+    List<WishlistItem> findByGuestSessionIdOrderByCreatedAtDesc(String guestSessionId);
+
+    Optional<WishlistItem> findByGuestSessionIdAndProductId(String guestSessionId, Long productId);
+
+    boolean existsByGuestSessionIdAndProductId(String guestSessionId, Long productId);
+
+    void deleteByGuestSessionId(String guestSessionId);
+
+    void deleteByGuestSessionIdAndProductId(String guestSessionId, Long productId);
+
+    Long countByGuestSessionId(String guestSessionId);
+
+    List<WishlistItem> findExpiredGuestSessions(LocalDateTime currentTime);
+
+    void deleteExpiredGuestSessions(LocalDateTime currentTime);
+
+    // ==================== Price & Stock Tracking ====================
+
+    List<WishlistItem> findItemsWithPriceDrops(Long userId);
+
+    List<WishlistItem> findItemsNeedingStockNotification(Long userId);
+
+    List<WishlistItem> findItemsNeedingPriceNotification(Long userId);
+
+    List<WishlistItem> findItemsBelowTargetPrice(Long userId);
+
+    List<WishlistItem> findItemsForPriceUpdate();
+
+    // ==================== Priority & Organization ====================
+
+    List<WishlistItem> findByUserIdAndPriority(Long userId, WishlistPriority priority);
+
+    List<WishlistItem> findByUserIdAndPriorityOrderByCreatedAtDesc(Long userId, WishlistPriority priority);
+
+    List<WishlistItem> findByUserIdAndCollectionName(Long userId, String collectionName);
+
+    List<String> findDistinctCollectionsByUserId(Long userId);
+
+    List<WishlistItem> findByUserIdAndTagsContaining(Long userId, String tag);
+
+    // ==================== Purchase Status ====================
+
+    List<WishlistItem> findUnpurchasedByUserId(Long userId);
+
+    List<WishlistItem> findPurchasedByUserId(Long userId);
+
+    List<WishlistItem> findPurchasedByUserIdAndDateRange(Long userId, LocalDateTime startDate, LocalDateTime endDate);
+
     boolean markAsPurchased(Long wishlistItemId);
 
-    /**
-     * Update wishlist item notes
-     */
-    boolean updateNotes(Long wishlistItemId, String notes);
+    void markMultipleAsPurchased(List<Long> wishlistItemIds);
 
-    /**
-     * Update wishlist item priority
-     */
-    boolean updatePriority(Long wishlistItemId, WishlistPriority priority);
+    // ==================== Public & Sharing ====================
 
-    /**
-     * Update price notification settings
-     */
-    boolean updatePriceNotificationSettings(Long wishlistItemId, boolean notifyOnPriceDrop, BigDecimal targetPrice);
+    List<WishlistItem> findPublicItemsByUserId(Long userId);
 
-    /**
-     * Update stock notification setting
-     */
-    boolean updateStockNotificationSetting(Long wishlistItemId, boolean notifyOnStock);
+    List<WishlistItem> findPublicItemsByUserIdOrderByCreatedAtDesc(Long userId);
 
-    /**
-     * Find wishlist items created between dates
-     */
-    List<WishlistItem> findByCreatedAtBetween(LocalDateTime startDate, LocalDateTime endDate);
+    void updatePublicStatus(Long userId, boolean isPublic);
 
-    /**
-     * Find wishlist items for specific product
-     */
+    void updatePublicStatusForItems(List<Long> itemIds, boolean isPublic);
+
+    // ==================== Reminders ====================
+
+    List<WishlistItem> findItemsWithDueReminders(LocalDateTime currentTime);
+
+    List<WishlistItem> findByUserIdAndReminderEnabled(Long userId, boolean reminderEnabled);
+
+    void updateReminder(Long itemId, LocalDateTime reminderDate, boolean reminderEnabled);
+
+    void cancelReminder(Long itemId);
+
+    // ==================== Product-based Queries ====================
+
     List<WishlistItem> findByProductId(Long productId);
 
-    /**
-     * Count users who have product in wishlist
-     */
     Long countByProductId(Long productId);
 
+    List<WishlistItem> findByProductIdIn(List<Long> productIds);
+
+    // ==================== Batch Updates ====================
+
+    boolean updateNotes(Long wishlistItemId, String notes);
+
+    boolean updatePriority(Long wishlistItemId, WishlistPriority priority);
+
+    boolean updatePriceNotificationSettings(Long wishlistItemId, boolean notifyOnPriceDrop, BigDecimal targetPrice);
+
+    boolean updateStockNotificationSetting(Long wishlistItemId, boolean notifyOnStock);
+
+    void updateCollection(List<Long> itemIds, String collectionName);
+
+    void updateTags(Long itemId, String tags);
+
+    // ==================== Analytics Queries ====================
+
+    List<WishlistItem> findByCreatedAtBetween(LocalDateTime startDate, LocalDateTime endDate);
+
+    List<WishlistItem> findByUserIdAndCreatedAtBetween(Long userId, LocalDateTime startDate, LocalDateTime endDate);
+
+    Long countByUserIdAndCreatedAtAfter(Long userId, LocalDateTime date);
+
+    List<Object[]> findCategoryAnalyticsByUserId(Long userId);
+
+    Double calculateAveragePriceDropByUserId(Long userId);
+
+    Double calculateTotalSavingsByUserId(Long userId);
+
+    // ==================== Guest to User Migration ====================
+
     /**
-     * Delete wishlist item by user and product
+     * Transfer all guest wishlist items to a user account
      */
-    void deleteByUserIdAndProductId(Long userId, Long productId);
+    void transferGuestItemsToUser(String guestSessionId, Long userId);
+
+    /**
+     * Merge guest items with existing user wishlist (avoid duplicates)
+     */
+    void mergeGuestItemsToUser(String guestSessionId, Long userId);
+
+    // ==================== Bulk Operations ====================
+
+    List<WishlistItem> findByUserIdAndProductIdIn(Long userId, List<Long> productIds);
+
+    void deleteByUserIdAndProductIdIn(Long userId, List<Long> productIds);
+
+    int bulkUpdatePriority(List<Long> itemIds, WishlistPriority priority);
+
+    int bulkUpdateCollection(Long userId, List<Long> productIds, String collectionName);
+
+    // ==================== Search & Filter ====================
+
+    List<WishlistItem> searchByUserIdAndKeyword(Long userId, String keyword);
+
+    Page<WishlistItem> findByUserIdWithFilters(
+            Long userId,
+            WishlistPriority priority,
+            Boolean purchased,
+            Boolean inStock,
+            String collectionName,
+            Pageable pageable
+    );
+
+    // ==================== Scheduled Updates ====================
+
+    /**
+     * Get all user IDs that have at least one wishlist item
+     */
+    List<Long> findAllUserIdsWithWishlists();
 }

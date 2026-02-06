@@ -2,11 +2,14 @@ package com.smart_ecomernce_api.smart_ecomernce_api.modules.user.repository.impl
 
 import com.smart_ecomernce_api.smart_ecomernce_api.common.utils.JdbcUtils;
 import com.smart_ecomernce_api.smart_ecomernce_api.common.utils.JdbcUtils.QueryResult;
+import com.smart_ecomernce_api.smart_ecomernce_api.exception.InvalidDataException;
+import com.smart_ecomernce_api.smart_ecomernce_api.exception.ResourceNotFoundException;
 import com.smart_ecomernce_api.smart_ecomernce_api.modules.user.entity.Role;
 import com.smart_ecomernce_api.smart_ecomernce_api.modules.user.entity.User;
 import com.smart_ecomernce_api.smart_ecomernce_api.modules.user.repository.UserRepository;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+
 import org.springframework.data.domain.*;
 import org.springframework.jdbc.core.RowMapper;
 import org.springframework.jdbc.core.namedparam.MapSqlParameterSource;
@@ -89,23 +92,18 @@ public class UserRepositoryImpl implements UserRepository {
 
     @Override
     @Transactional
-    public User save(User user) {
-        if (user.getId() == null) {
+    public User saveUser(User user) {
             return insert(user);
-        } else {
-            return update(user);
-        }
-    }
 
+    }
     @Override
     @Transactional
-    public List<User> saveAll(Iterable<User> users) {
-        List<User> result = new ArrayList<>();
-        for (User user : users) {
-            result.add(save(user));
-        }
-        return result;
+    public User updateUser(User user) {
+
+            return update(user);
+
     }
+
 
     @Override
     public Optional<User> findById(Long id) {
@@ -146,7 +144,6 @@ public class UserRepositoryImpl implements UserRepository {
         return new PageImpl<>(users, pageable, total);
     }
 
-    @Override
     public List<User> findAllById(Iterable<Long> ids) {
         List<Long> idList = new ArrayList<>();
         ids.forEach(idList::add);
@@ -173,13 +170,96 @@ public class UserRepositoryImpl implements UserRepository {
     @Override
     @Transactional
     public void deleteById(Long id) {
+        String deleteAddressesQuery = "DELETE FROM addresses WHERE user_id = ?";
+        QueryResult deleteAddressesResult = jdbcUtils.executePreparedQuery(deleteAddressesQuery, id);
+        if (deleteAddressesResult.hasError()) {
+            logger.error("Error deleting addresses for user id {}: {}", id, deleteAddressesResult.getError());
+            throw new InvalidDataException("Failed to delete addresses for user with id " + id + ": " + deleteAddressesResult.getError());
+        }
+
+        String deleteProfileQuery = "DELETE FROM profiles WHERE id = ?";
+        QueryResult deleteProfileResult = jdbcUtils.executePreparedQuery(deleteProfileQuery, id);
+        if (deleteProfileResult.hasError()) {
+            logger.error("Error deleting profile for user id {}: {}", id, deleteProfileResult.getError());
+            throw new InvalidDataException("Failed to delete profile for user with id " + id + ": " + deleteProfileResult.getError());
+        }
+
+        String deleteCartItemsQuery = "DELETE FROM cart_items WHERE cart_id IN (SELECT id FROM carts WHERE user_id = ?)";
+        QueryResult deleteCartItemsResult = jdbcUtils.executePreparedQuery(deleteCartItemsQuery, id);
+        if (deleteCartItemsResult.hasError()) {
+            logger.error("Error deleting cart items for user id {}: {}", id, deleteCartItemsResult.getError());
+            throw new InvalidDataException("Failed to delete cart items for user with id " + id + ": " + deleteCartItemsResult.getError());
+        }
+
+        String deleteCartsQuery = "DELETE FROM carts WHERE user_id = ?";
+        QueryResult deleteCartsResult = jdbcUtils.executePreparedQuery(deleteCartsQuery, id);
+        if (deleteCartsResult.hasError()) {
+            logger.error("Error deleting carts for user id {}: {}", id, deleteCartsResult.getError());
+            throw new InvalidDataException("Failed to delete carts for user with id " + id + ": " + deleteCartsResult.getError());
+        }
+
+        String deleteWishlistItemsQuery = "DELETE FROM wishlist_items WHERE user_id = ?";
+        QueryResult deleteWishlistItemsResult = jdbcUtils.executePreparedQuery(deleteWishlistItemsQuery, id);
+        if (deleteWishlistItemsResult.hasError()) {
+            logger.error("Error deleting wishlist items for user id {}: {}", id, deleteWishlistItemsResult.getError());
+            throw new InvalidDataException("Failed to delete wishlist items for user with id " + id + ": " + deleteWishlistItemsResult.getError());
+        }
+
+        String deleteReviewImagesQuery = "DELETE FROM review_images WHERE review_id IN (SELECT id FROM reviews WHERE user_id = ?)";
+        QueryResult deleteReviewImagesResult = jdbcUtils.executePreparedQuery(deleteReviewImagesQuery, id);
+        if (deleteReviewImagesResult.hasError()) {
+            logger.error("Error deleting review images for user id {}: {}", id, deleteReviewImagesResult.getError());
+            throw new InvalidDataException("Failed to delete review images for user with id " + id + ": " + deleteReviewImagesResult.getError());
+        }
+
+        String deleteReviewProsQuery = "DELETE FROM review_pros WHERE review_id IN (SELECT id FROM reviews WHERE user_id = ?)";
+        QueryResult deleteReviewProsResult = jdbcUtils.executePreparedQuery(deleteReviewProsQuery, id);
+        if (deleteReviewProsResult.hasError()) {
+            logger.error("Error deleting review pros for user id {}: {}", id, deleteReviewProsResult.getError());
+            throw new InvalidDataException("Failed to delete review pros for user with id " + id + ": " + deleteReviewProsResult.getError());
+        }
+
+        String deleteReviewConsQuery = "DELETE FROM review_cons WHERE review_id IN (SELECT id FROM reviews WHERE user_id = ?)";
+        QueryResult deleteReviewConsResult = jdbcUtils.executePreparedQuery(deleteReviewConsQuery, id);
+        if (deleteReviewConsResult.hasError()) {
+            logger.error("Error deleting review cons for user id {}: {}", id, deleteReviewConsResult.getError());
+            throw new InvalidDataException("Failed to delete review cons for user with id " + id + ": " + deleteReviewConsResult.getError());
+        }
+
+        String deleteReviewsQuery = "DELETE FROM reviews WHERE user_id = ?";
+        QueryResult deleteReviewsResult = jdbcUtils.executePreparedQuery(deleteReviewsQuery, id);
+        if (deleteReviewsResult.hasError()) {
+            logger.error("Error deleting reviews for user id {}: {}", id, deleteReviewsResult.getError());
+            throw new InvalidDataException("Failed to delete reviews for user with id " + id + ": " + deleteReviewsResult.getError());
+        }
+
+        String deleteOrderItemsQuery = "DELETE FROM order_items WHERE order_id IN (SELECT id FROM orders WHERE user_id = ?)";
+        QueryResult deleteOrderItemsResult = jdbcUtils.executePreparedQuery(deleteOrderItemsQuery, id);
+        if (deleteOrderItemsResult.hasError()) {
+            logger.error("Error deleting order items for user id {}: {}", id, deleteOrderItemsResult.getError());
+            throw new InvalidDataException("Failed to delete order items for user with id " + id + ": " + deleteOrderItemsResult.getError());
+        }
+
+        String deleteOrdersQuery = "DELETE FROM orders WHERE user_id = ?";
+        QueryResult deleteOrdersResult = jdbcUtils.executePreparedQuery(deleteOrdersQuery, id);
+        if (deleteOrdersResult.hasError()) {
+            logger.error("Error deleting orders for user id {}: {}", id, deleteOrdersResult.getError());
+            throw new InvalidDataException("Failed to delete orders for user with id " + id + ": " + deleteOrdersResult.getError());
+        }
+
         String query = "DELETE FROM " + TABLE_NAME + " WHERE id = ?";
         QueryResult result = jdbcUtils.executePreparedQuery(query, id);
-        if (!result.hasError()) {
-            logger.info("Deleted user with id: {}", id);
-        } else {
+        if (result.hasError()) {
             logger.error("Error deleting user with id {}: {}", id, result.getError());
+            throw new InvalidDataException("Failed to delete user with id " + id + ": " + result.getError());
         }
+
+        if (result.getAffectedRows() <= 0) {
+            logger.warn("Delete user with id {} did not affect any rows", id);
+            throw new ResourceNotFoundException("User not found with id: " + id);
+        }
+
+        logger.info("Deleted user with id: {}", id);
     }
 
     @Override
@@ -188,19 +268,16 @@ public class UserRepositoryImpl implements UserRepository {
         deleteById(user.getId());
     }
 
-    @Override
     @Transactional
     public void deleteAllById(Iterable<Long> ids) {
         ids.forEach(this::deleteById);
     }
 
-    @Override
     @Transactional
     public void deleteAll(Iterable<User> users) {
         users.forEach(this::delete);
     }
 
-    @Override
     @Transactional
     public void deleteAll() {
         String query = "DELETE FROM " + TABLE_NAME;
@@ -214,7 +291,7 @@ public class UserRepositoryImpl implements UserRepository {
     public Optional<User> findByEmail(String email) {
         String query = BASE_SELECT + " WHERE email = ?";
         List<User> users = jdbcUtils.query(query, userRowMapper, email);
-        return users.isEmpty() ? Optional.empty() : Optional.of(users.get(0));
+        return users.isEmpty() ? Optional.empty() : Optional.of(users.getFirst());
     }
 
     @Override
@@ -238,52 +315,6 @@ public class UserRepositoryImpl implements UserRepository {
         return count != null && count > 0;
     }
 
-    @Override
-    public Optional<User> findActiveById(Long id) {
-        String query = BASE_SELECT + " WHERE is_active = true AND id = ?";
-        List<User> users = jdbcUtils.query(query, userRowMapper, id);
-        return users.isEmpty() ? Optional.empty() : Optional.of(users.get(0));
-    }
-
-    @Override
-    public Page<User> findUsersWithFilters(String firstName, String lastName,
-                                           String role, Pageable pageable) {
-        StringBuilder queryBuilder = new StringBuilder(BASE_SELECT);
-        queryBuilder.append(" WHERE 1=1");
-
-        Map<String, Object> params = new HashMap<>();
-
-        if (firstName != null && !firstName.isEmpty()) {
-            queryBuilder.append(" AND LOWER(first_name) LIKE LOWER(:firstName)");
-            params.put("firstName", "%" + firstName + "%");
-        }
-
-        if (lastName != null && !lastName.isEmpty()) {
-            queryBuilder.append(" AND LOWER(last_name) LIKE LOWER(:lastName)");
-            params.put("lastName", "%" + lastName + "%");
-        }
-
-        if (role != null && !role.isEmpty()) {
-            queryBuilder.append(" AND role = :role");
-            params.put("role", role);
-        }
-
-        // Count total
-        String countQuery = "SELECT COUNT(*) FROM " + TABLE_NAME +
-                queryBuilder.substring(BASE_SELECT.length());
-        Long total = jdbcUtils.queryForObject(countQuery, Long.class, params);
-        long totalCount = total != null ? total : 0L;
-
-        // Add pagination
-        queryBuilder.append(buildOrderByClause(pageable.getSort()));
-        queryBuilder.append(" LIMIT :limit OFFSET :offset");
-        params.put("limit", pageable.getPageSize());
-        params.put("offset", pageable.getOffset());
-
-        List<User> users = jdbcUtils.query(queryBuilder.toString(), userRowMapper, params);
-
-        return new PageImpl<>(users, pageable, totalCount);
-    }
 
     @Override
     public Long countByIsActive(boolean isActive) {
@@ -292,17 +323,7 @@ public class UserRepositoryImpl implements UserRepository {
         return count != null ? count : 0L;
     }
 
-    @Override
-    public List<User> findAllActiveUsers() {
-        String query = BASE_SELECT + " WHERE is_active = true";
-        return jdbcUtils.query(query, userRowMapper);
-    }
 
-    @Override
-    public List<User> findByRole(String role) {
-        String query = BASE_SELECT + " WHERE role = ?";
-        return jdbcUtils.query(query, userRowMapper, role);
-    }
 
     @Override
     public Page<User> findByRole(String role, Pageable pageable) {
@@ -318,6 +339,24 @@ public class UserRepositoryImpl implements UserRepository {
 
         List<User> users = jdbcUtils.query(query, userRowMapper,
                 role, pageable.getPageSize(), pageable.getOffset());
+
+        return new PageImpl<>(users, pageable, totalCount);
+    }
+
+    @Override
+    public Page<User> findByIsActive(boolean isActive, Pageable pageable) {
+        // Count total
+        String countQuery = "SELECT COUNT(*) FROM " + TABLE_NAME + " WHERE is_active = ?";
+        Long total = jdbcUtils.queryForObject(countQuery, Long.class, isActive);
+        long totalCount = total != null ? total : 0L;
+
+        // Get paginated results
+        String query = BASE_SELECT + " WHERE is_active = ?" +
+                buildOrderByClause(pageable.getSort()) +
+                " LIMIT ? OFFSET ?";
+
+        List<User> users = jdbcUtils.query(query, userRowMapper,
+                isActive, pageable.getPageSize(), pageable.getOffset());
 
         return new PageImpl<>(users, pageable, totalCount);
     }
@@ -376,32 +415,6 @@ public class UserRepositoryImpl implements UserRepository {
         return false;
     }
 
-    @Override
-    @Transactional
-    public boolean updateActiveStatus(Long userId, boolean isActive) {
-        Map<String, Object> params = new HashMap<>();
-        params.put("isActive", isActive);
-        params.put("updatedAt", Timestamp.valueOf(LocalDateTime.now()));
-        params.put("id", userId);
-
-        String query = "UPDATE " + TABLE_NAME +
-                " SET is_active = :isActive, updated_at = :updatedAt WHERE id = :id";
-
-        QueryResult result = jdbcUtils.executeNamedQuery(query, params);
-
-        if (!result.hasError() && result.getAffectedRows() > 0) {
-            logger.info("Updated active status to {} for user id: {}", isActive, userId);
-            return true;
-        }
-        return false;
-    }
-
-    @Override
-    public List<User> findByCreatedAtBetween(LocalDateTime startDate, LocalDateTime endDate) {
-        String query = BASE_SELECT + " WHERE created_at BETWEEN ? AND ?";
-        return jdbcUtils.query(query, userRowMapper,
-                Timestamp.valueOf(startDate), Timestamp.valueOf(endDate));
-    }
 
     @Override
     @Transactional
@@ -476,8 +489,16 @@ public class UserRepositoryImpl implements UserRepository {
 
         QueryResult result = jdbcUtils.executeNamedQuery(query, params);
 
+        if (result.hasError()) {
+            logger.error("Error inserting user: {} | Query: {} | Params: {}", result.getError(), query, params);
+            throw new RuntimeException("User insert failed: " + result.getError());
+        }
+
         if (result.getGeneratedKey() != null) {
             user.setId(result.getGeneratedKey());
+        } else {
+            logger.error("No generated key returned for user insert! Params: {}", params);
+            throw new RuntimeException("User insert failed: No generated key returned.");
         }
 
         logger.info("Inserted user with id: {}", user.getId());
@@ -552,3 +573,4 @@ public class UserRepositoryImpl implements UserRepository {
         return camelCase.replaceAll("([a-z])([A-Z])", "$1_$2").toLowerCase();
     }
 }
+

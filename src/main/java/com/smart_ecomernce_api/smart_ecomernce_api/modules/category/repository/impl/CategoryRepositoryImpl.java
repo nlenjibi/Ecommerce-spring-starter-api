@@ -61,10 +61,40 @@ public class CategoryRepositoryImpl implements CategoryRepository {
     }
 
     @Override
-    public Category save(Category category) {
+    public Category saveParentCategory(Category category) {
         String sql = """
             INSERT INTO categories (
-                name, slug, description, image_url, display_order, 
+                name, slug, description, image_url, display_order,
+                is_active, created_at, updated_at
+            ) VALUES (?, ?, ?, ?, ?, ?, ?, ?)
+        """;
+
+        JdbcUtils.QueryResult result = jdbcUtils.executePreparedQuery(sql,
+                category.getName(),
+                category.getSlug(),
+                category.getDescription(),
+                category.getImageUrl(),
+                category.getDisplayOrder() != null ? category.getDisplayOrder() : 0,
+                category.getIsActive() != null ? category.getIsActive() : true,
+                LocalDateTime.now(),
+                LocalDateTime.now()
+        );
+
+        if (result.getGeneratedKey() != null) {
+            category.setId(result.getGeneratedKey());
+            return findById(category.getId()).orElse(category);
+        }
+
+        // If we couldn't get a generated key, return the object as-is.
+        // Any underlying DB error is already logged inside JdbcUtils.
+        return category;
+    }
+
+    @Override
+    public Category saveChildCategory(Category category) {
+        String sql = """
+            INSERT INTO categories (
+                name, slug, description, image_url, display_order,
                 parent_id, is_active, created_at, updated_at
             ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)
         """;
@@ -83,6 +113,7 @@ public class CategoryRepositoryImpl implements CategoryRepository {
 
         if (result.getGeneratedKey() != null) {
             category.setId(result.getGeneratedKey());
+            return findById(category.getId()).orElse(category);
         }
 
         return category;
@@ -102,9 +133,9 @@ public class CategoryRepositoryImpl implements CategoryRepository {
                 category.getSlug(),
                 category.getDescription(),
                 category.getImageUrl(),
-                category.getDisplayOrder(),
+                category.getDisplayOrder() != null ? category.getDisplayOrder() : 0,
                 category.getParent() != null ? category.getParent().getId() : null,
-                category.getIsActive(),
+                category.getIsActive() != null ? category.getIsActive() : true,
                 LocalDateTime.now(),
                 category.getId()
         );
@@ -320,33 +351,13 @@ public class CategoryRepositoryImpl implements CategoryRepository {
 
     @Override
     public boolean deleteById(Long id) {
-        // First, update children to point to this category's parent
-        Optional<Category> categoryOpt = findById(id);
-        if (categoryOpt.isPresent()) {
-            Category category = categoryOpt.get();
-            Long newParentId = category.getParent() != null ? category.getParent().getId() : null;
+        // Delete children first to satisfy FK constraints (hard delete)
+        String deleteChildrenSql = "DELETE FROM categories WHERE parent_id = ?";
+        jdbcUtils.executePreparedQuery(deleteChildrenSql, id);
 
-            String updateChildrenSql = "UPDATE categories SET parent_id = ? WHERE parent_id = ?";
-            jdbcUtils.executePreparedQuery(updateChildrenSql, newParentId, id);
-        }
-
-        // Then delete the category
+        // Then delete the parent category
         String sql = "DELETE FROM categories WHERE id = ?";
         JdbcUtils.QueryResult result = jdbcUtils.executePreparedQuery(sql, id);
-        return result.getAffectedRows() > 0;
-    }
-
-    @Override
-    public boolean softDeleteById(Long id) {
-        String sql = "UPDATE categories SET is_active = false, updated_at = ? WHERE id = ?";
-        JdbcUtils.QueryResult result = jdbcUtils.executePreparedQuery(sql, LocalDateTime.now(), id);
-        return result.getAffectedRows() > 0;
-    }
-
-    @Override
-    public boolean restoreById(Long id) {
-        String sql = "UPDATE categories SET is_active = true, updated_at = ? WHERE id = ?";
-        JdbcUtils.QueryResult result = jdbcUtils.executePreparedQuery(sql, LocalDateTime.now(), id);
         return result.getAffectedRows() > 0;
     }
 
@@ -386,7 +397,7 @@ public class CategoryRepositoryImpl implements CategoryRepository {
 
     @Override
     public List<Category> searchByName(String searchTerm) {
-        String sql = "SELECT * FROM categories WHERE name LIKE ? ORDER BY name ASC";
+        String sql = "SELECT * FROM categories WHERE LOWER(name) LIKE LOWER(?) ORDER BY name ASC";
         return jdbcUtils.query(sql, new CategoryRowMapper(), "%" + searchTerm + "%");
     }
 
@@ -399,5 +410,11 @@ public class CategoryRepositoryImpl implements CategoryRepository {
             ORDER BY c.name ASC
         """;
         return jdbcUtils.query(sql, new CategoryRowMapper());
+    }
+
+    @Override
+    public List<Category> findAllByNameIgnoreCase(String name) {
+        String sql = "SELECT * FROM categories WHERE LOWER(name) = LOWER(?) ORDER BY name ASC";
+        return jdbcUtils.query(sql, new CategoryRowMapper(), name);
     }
 }

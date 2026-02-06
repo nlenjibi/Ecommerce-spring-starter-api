@@ -39,4 +39,8 @@ public class ProductUpdateRequest {
     private Long categoryId;
 
     private Boolean isActive;
+
+    private String imageUrl;
+
+    private java.util.List<String> imageUrls;
 }

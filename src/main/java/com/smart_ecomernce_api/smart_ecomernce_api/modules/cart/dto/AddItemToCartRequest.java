@@ -13,6 +13,9 @@ import lombok.NoArgsConstructor;
 @AllArgsConstructor
 public class AddItemToCartRequest {
 
+    @Positive(message = "Cart ID must be positive")
+    private Long cartId;
+
     @NotNull(message = "Product ID is required")
     @Positive(message = "Product ID must be positive")
     private Long productId;
@@ -21,4 +24,3 @@ public class AddItemToCartRequest {
     @Builder.Default
     private Integer quantity = 1;
 }
-

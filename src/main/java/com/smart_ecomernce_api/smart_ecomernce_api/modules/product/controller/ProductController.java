@@ -61,7 +61,7 @@ public class ProductController {
             @Parameter(description = "Sort field", example = "price")
             @RequestParam(defaultValue = "id") String sortBy,
             @Parameter(description = "Sort direction", example = "ASC")
-            @RequestParam(defaultValue = "ASC") Sort.Direction direction,
+            @RequestParam(defaultValue = "ASC", name = "direction") String direction,
             @Parameter(description = "Filter by category ID (optional)")
             @RequestParam(required = false) Long categoryId,
             @Parameter(description = "Minimum price (optional)")
@@ -71,7 +71,11 @@ public class ProductController {
             @Parameter(description = "Search product by name (optional)")
             @RequestParam(required = false) String search) {
 
-        Pageable pageable = PageRequest.of(page, size, Sort.by(direction, sortBy));
+        Sort.Direction sortDirection = "desc".equalsIgnoreCase(direction)
+                ? Sort.Direction.DESC
+                : Sort.Direction.ASC;
+
+        Pageable pageable = PageRequest.of(page, size, Sort.by(sortDirection, sortBy));
 
         Page<ProductResponse> response;
 
@@ -99,10 +103,34 @@ public class ProductController {
             @RequestParam(defaultValue = "0") int page,
             @RequestParam(defaultValue = "20") int size,
             @RequestParam(defaultValue = "id") String sortBy,
-            @RequestParam(defaultValue = "ASC") Sort.Direction direction) {
+            @RequestParam(defaultValue = "ASC", name = "direction") String direction) {
 
-        Pageable pageable = PageRequest.of(page, size, Sort.by(direction, sortBy));
+        Sort.Direction sortDirection = "desc".equalsIgnoreCase(direction)
+                ? Sort.Direction.DESC
+                : Sort.Direction.ASC;
+
+        Pageable pageable = PageRequest.of(page, size, Sort.by(sortDirection, sortBy));
         Page<ProductResponse> response = productService.getProductsByCategory(categoryId, pageable);
+        PaginatedResponse<ProductResponse> paginatedResponse = PaginatedResponse.from(response);
+        return ResponseEntity.ok(ApiResponse.success(paginatedResponse));
+    }
+
+    @GetMapping("/category/name/{categoryName}")
+    @Operation(summary = "Get products by category name", description = "Retrieve products filtered by category name (case-insensitive exact match)")
+    public ResponseEntity<ApiResponse<PaginatedResponse<ProductResponse>>> getProductsByCategoryName(
+            @Parameter(description = "Category name", required = true, example = "Accessories")
+            @PathVariable String categoryName,
+            @RequestParam(defaultValue = "0") int page,
+            @RequestParam(defaultValue = "20") int size,
+            @RequestParam(defaultValue = "id") String sortBy,
+            @RequestParam(defaultValue = "ASC", name = "direction") String direction) {
+
+        Sort.Direction sortDirection = "desc".equalsIgnoreCase(direction)
+                ? Sort.Direction.DESC
+                : Sort.Direction.ASC;
+
+        Pageable pageable = PageRequest.of(page, size, Sort.by(sortDirection, sortBy));
+        Page<ProductResponse> response = productService.getProductsByCategoryName(categoryName, pageable);
         PaginatedResponse<ProductResponse> paginatedResponse = PaginatedResponse.from(response);
         return ResponseEntity.ok(ApiResponse.success(paginatedResponse));
     }
@@ -117,9 +145,13 @@ public class ProductController {
             @RequestParam(defaultValue = "0") int page,
             @RequestParam(defaultValue = "20") int size,
             @RequestParam(defaultValue = "price") String sortBy,
-            @RequestParam(defaultValue = "ASC") Sort.Direction direction) {
+            @RequestParam(defaultValue = "ASC", name = "direction") String direction) {
 
-        Pageable pageable = PageRequest.of(page, size, Sort.by(direction, sortBy));
+        Sort.Direction sortDirection = "desc".equalsIgnoreCase(direction)
+                ? Sort.Direction.DESC
+                : Sort.Direction.ASC;
+
+        Pageable pageable = PageRequest.of(page, size, Sort.by(sortDirection, sortBy));
         Page<ProductResponse> response = productService.getProductsByPriceRange(minPrice, maxPrice, pageable);
         PaginatedResponse<ProductResponse> paginatedResponse = PaginatedResponse.from(response);
         return ResponseEntity.ok(ApiResponse.success(paginatedResponse));
@@ -133,9 +165,13 @@ public class ProductController {
             @RequestParam(defaultValue = "0") int page,
             @RequestParam(defaultValue = "20") int size,
             @RequestParam(defaultValue = "id") String sortBy,
-            @RequestParam(defaultValue = "ASC") Sort.Direction direction) {
+            @RequestParam(defaultValue = "ASC", name = "direction") String direction) {
 
-        Pageable pageable = PageRequest.of(page, size, Sort.by(direction, sortBy));
+        Sort.Direction sortDirection = "desc".equalsIgnoreCase(direction)
+                ? Sort.Direction.DESC
+                : Sort.Direction.ASC;
+
+        Pageable pageable = PageRequest.of(page, size, Sort.by(sortDirection, sortBy));
         Page<ProductResponse> response = productService.searchProducts(search, pageable);
         PaginatedResponse<ProductResponse> paginatedResponse = PaginatedResponse.from(response);
         return ResponseEntity.ok(ApiResponse.success(paginatedResponse));
@@ -192,5 +228,43 @@ public class ProductController {
             @RequestParam Integer quantity) {
         ProductResponse response = productService.reduceStock(id, quantity);
         return ResponseEntity.ok(ApiResponse.success("Stock reduced successfully", response));
+    }
+
+    @GetMapping("/inventory-status/{status}")
+    @Operation(summary = "Get products by inventory status", description = "Retrieve products filtered by inventory status")
+    public ResponseEntity<ApiResponse<PaginatedResponse<ProductResponse>>> getProductsByInventoryStatus(
+            @Parameter(description = "Inventory status", required = true, example = "LOW_STOCK")
+            @PathVariable com.smart_ecomernce_api.smart_ecomernce_api.modules.product.entity.InventoryStatus status,
+            @RequestParam(defaultValue = "0") int page,
+            @RequestParam(defaultValue = "20") int size,
+            @RequestParam(defaultValue = "id") String sortBy,
+            @RequestParam(defaultValue = "ASC", name = "direction") String direction) {
+
+        Sort.Direction sortDirection = "desc".equalsIgnoreCase(direction)
+                ? Sort.Direction.DESC
+                : Sort.Direction.ASC;
+
+        Pageable pageable = PageRequest.of(page, size, Sort.by(sortDirection, sortBy));
+        Page<ProductResponse> response = productService.findByInventoryStatus(status, pageable);
+        PaginatedResponse<ProductResponse> paginatedResponse = PaginatedResponse.from(response);
+        return ResponseEntity.ok(ApiResponse.success(paginatedResponse));
+    }
+
+    @GetMapping("/needs-reorder")
+    @Operation(summary = "Get products needing reorder", description = "Retrieve products whose stock_quantity is below or equal to reorder_point")
+    public ResponseEntity<ApiResponse<PaginatedResponse<ProductResponse>>> getProductsNeedingReorder(
+            @RequestParam(defaultValue = "0") int page,
+            @RequestParam(defaultValue = "20") int size,
+            @RequestParam(defaultValue = "id") String sortBy,
+            @RequestParam(defaultValue = "ASC", name = "direction") String direction) {
+
+        Sort.Direction sortDirection = "desc".equalsIgnoreCase(direction)
+                ? Sort.Direction.DESC
+                : Sort.Direction.ASC;
+
+        Pageable pageable = PageRequest.of(page, size, Sort.by(sortDirection, sortBy));
+        Page<ProductResponse> response = productService.getProductsNeedingReorder(pageable);
+        PaginatedResponse<ProductResponse> paginatedResponse = PaginatedResponse.from(response);
+        return ResponseEntity.ok(ApiResponse.success(paginatedResponse));
     }
 }

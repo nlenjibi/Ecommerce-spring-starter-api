@@ -11,10 +11,6 @@ import java.util.Optional;
  */
 public interface CategoryRepository {
 
-    /**
-     * Save a new category
-     */
-    Category save(Category category);
 
     /**
      * Update an existing category
@@ -161,15 +157,6 @@ public interface CategoryRepository {
      */
     boolean deleteById(Long id);
 
-    /**
-     * Soft delete category (set isActive = false)
-     */
-    boolean softDeleteById(Long id);
-
-    /**
-     * Restore soft deleted category
-     */
-    boolean restoreById(Long id);
 
     /**
      * Get category level/depth in hierarchy (0 for root)
@@ -195,4 +182,19 @@ public interface CategoryRepository {
      * Find categories with no products
      */
     List<Category> findCategoriesWithNoProducts();
+
+    /**
+     * Save a new parent category (no parent_id)
+     */
+    Category saveParentCategory(Category category);
+
+    /**
+     * Save a new child category (requires parent_id)
+     */
+    Category saveChildCategory(Category category);
+
+    /**
+     * Find all categories by name (case-insensitive exact match)
+     */
+    List<Category> findAllByNameIgnoreCase(String name);
 }

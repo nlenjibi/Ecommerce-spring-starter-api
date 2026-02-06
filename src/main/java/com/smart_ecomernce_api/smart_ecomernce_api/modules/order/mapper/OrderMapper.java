@@ -14,9 +14,18 @@ import java.util.List;
 public interface OrderMapper {
 
     @Mapping(target = "userId", source = "user.id")
-
     @Mapping(target = "items", source = "orderItems")
     @Mapping(target = "itemCount", expression = "java(order.getItemCount())")
+    @Mapping(target = "shippingMethod", source = "shippingMethod")
+    @Mapping(target = "shippingAddress", source = "shippingAddress")
+    @Mapping(target = "trackingNumber", source = "trackingNumber")
+    @Mapping(target = "carrier", source = "carrier")
+    @Mapping(target = "shippedAt", source = "shippedAt")
+    @Mapping(target = "estimatedDeliveryDate", source = "estimatedDeliveryDate")
+    @Mapping(target = "customerNotes", source = "customerNotes")
+    @Mapping(target = "shippingCost", source = "shippingCost")
+    @Mapping(target = "taxAmount", source = "taxAmount")
+    @Mapping(target = "discountAmount", source = "discountAmount")
     OrderResponse toDto(Order order);
 
     @Mapping(target = "productId", source = "product.id")

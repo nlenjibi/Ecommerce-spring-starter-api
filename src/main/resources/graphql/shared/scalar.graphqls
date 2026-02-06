@@ -1,4 +1,4 @@
 scalar DateTime
-scalar UUID
+scalar Long
 scalar BigDecimal
 scalar Upload

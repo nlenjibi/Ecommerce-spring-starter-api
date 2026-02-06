@@ -3,9 +3,8 @@ package com.smart_ecomernce_api.smart_ecomernce_api.modules.review.service.impl;
 
 import com.smart_ecomernce_api.smart_ecomernce_api.exception.InvalidDataException;
 import com.smart_ecomernce_api.smart_ecomernce_api.exception.ResourceNotFoundException;
-import com.smart_ecomernce_api.smart_ecomernce_api.modules.review.dto.ReviewCreateRequest;
-import com.smart_ecomernce_api.smart_ecomernce_api.modules.review.dto.ReviewResponse;
-import com.smart_ecomernce_api.smart_ecomernce_api.modules.review.dto.ReviewUpdateRequest;
+import com.smart_ecomernce_api.smart_ecomernce_api.exception.UnauthorizedException;
+import com.smart_ecomernce_api.smart_ecomernce_api.modules.review.dto.*;
 import com.smart_ecomernce_api.smart_ecomernce_api.modules.review.entity.ProductRatingStats;
 import com.smart_ecomernce_api.smart_ecomernce_api.modules.review.service.ReviewService;
 import com.smart_ecomernce_api.smart_ecomernce_api.modules.review.repository.ReviewRepository;
@@ -29,6 +28,16 @@ import org.springframework.transaction.annotation.Transactional;
 import java.util.List;
 import java.util.Map;
 
+
+import org.springframework.cache.annotation.CacheEvict;
+import org.springframework.cache.annotation.Cacheable;
+
+import java.util.stream.Collectors;
+
+/**
+ * Implementation of ReviewService
+ * Handles all business logic for product reviews
+ */
 @Service
 @RequiredArgsConstructor
 @Slf4j
@@ -41,148 +50,429 @@ public class ReviewServiceImpl implements ReviewService {
     private final OrderRepository orderRepository;
     private final ReviewMapper reviewMapper;
 
+    // ==================== Basic CRUD Operations ====================
+
     @Override
     public ReviewResponse createReview(ReviewCreateRequest request, Long userId) {
         log.info("Creating review for product {} by user {}", request.getProductId(), userId);
 
-        // Check if user already reviewed this product
+        // Validate user hasn't already reviewed this product
         if (reviewRepository.existsByProductIdAndUserId(request.getProductId(), userId)) {
             throw new InvalidDataException("You have already reviewed this product");
         }
 
+        // Fetch and validate product
         Product product = productRepository.findById(request.getProductId())
-                .orElseThrow(() -> ResourceNotFoundException.forResource("Product", request.getProductId()));
+                .orElseThrow(() -> ResourceNotFoundException.forResource("Product id", request.getProductId()));
 
+        // Fetch and validate user
         User user = userRepository.findById(userId)
-                .orElseThrow(() -> ResourceNotFoundException.forResource("User", userId));
+                .orElseThrow(() ->  ResourceNotFoundException.forResource("Userid", userId));
 
+        // Create review entity
         Review review = reviewMapper.toEntity(request);
         review.setProduct(product);
         review.setUser(user);
 
         // Check if verified purchase
-        boolean verifiedPurchase = orderRepository.existsByUserIdAndProductId(userId, request.getProductId());
-        review.setVerifiedPurchase(verifiedPurchase);
+        boolean hasOrdered = orderRepository.existsByUserIdAndProductId(userId, request.getProductId());
+        review.setVerifiedPurchase(hasOrdered);
 
-        // Auto-approve verified purchases or set pending
-        review.setApproved(verifiedPurchase);
+        // Auto-approve verified purchases, pending for others
+        review.setApproved(hasOrdered);
 
-        Review saved = reviewRepository.save(review);
-        log.info("Review created with ID: {}", saved.getId());
+        // Save review
+        Review savedReview = reviewRepository.save(review);
+        log.info("Review created successfully with ID: {}", savedReview.getId());
 
-        return reviewMapper.toDto(saved);
+        return reviewMapper.toDto(savedReview);
     }
-
 
     @Override
     public ReviewResponse updateReview(Long reviewId, ReviewUpdateRequest request, Long userId) {
         log.info("Updating review {} by user {}", reviewId, userId);
 
         Review review = reviewRepository.findById(reviewId)
-                .orElseThrow(() -> ResourceNotFoundException.forResource("Review", reviewId));
+                .orElseThrow(() -> ResourceNotFoundException.forResource("Review id", reviewId));
 
-        // Check ownership
-        if (!review.getUser().getId().equals(userId)) {
-            throw new InvalidDataException("You can only update your own reviews");
+        // Validate ownership
+        if (!review.canBeEditedBy(userId)) {
+            throw new UnauthorizedException("You can only update your own reviews");
         }
 
-        reviewMapper.update(request, review);
-        Review updated = reviewRepository.save(review);
+        // Update review fields
+        reviewMapper.updateFromDto(request, review);
 
-        return reviewMapper.toDto(updated);
+        // Reset approval status if content changed significantly
+        if (request.getRating() != null || request.getComment() != null) {
+            review.setApproved(review.getVerifiedPurchase()); // Re-approve only if verified
+        }
+
+        Review updatedReview = reviewRepository.save(review);
+        log.info("Review {} updated successfully", reviewId);
+
+        return reviewMapper.toDto(updatedReview);
     }
-
 
     @Override
     public void deleteReview(Long reviewId, Long userId) {
         log.info("Deleting review {} by user {}", reviewId, userId);
 
         Review review = reviewRepository.findById(reviewId)
-                .orElseThrow(() -> ResourceNotFoundException.forResource("Review", reviewId));
+                .orElseThrow(() -> ResourceNotFoundException.forResource("Review id", reviewId));
 
-        if (!review.getUser().getId().equals(userId)) {
-            throw new InvalidDataException("You can only delete your own reviews");
+        if (!review.canBeDeletedBy(userId)) {
+            throw new UnauthorizedException("You can only delete your own reviews");
         }
 
-        reviewRepository.deleteById(reviewId);
+        review.softDelete();
+        reviewRepository.save(review);
+        log.info("Review {} deleted successfully", reviewId);
     }
 
-    /**
-     * Get reviews by product
-     */
+    @Override
+    @Transactional(readOnly = true)
+    public ReviewResponse getReview(Long reviewId) {
+        Review review = reviewRepository.findById(reviewId)
+                .orElseThrow(() -> ResourceNotFoundException.forResource("Review id", reviewId));
+        return reviewMapper.toDto(review);
+    }
+
+    @Override
+    public ReviewResponse restoreReview(Long reviewId, Long userId) {
+        log.info("Restoring review {} by user {}", reviewId, userId);
+
+        Review review = reviewRepository.findByIdIncludingDeleted(reviewId)
+                .orElseThrow(() -> ResourceNotFoundException.forResource("Review id", reviewId));
+
+        if (!review.getUser().getId().equals(userId)) {
+            throw new UnauthorizedException("You can only restore your own reviews");
+        }
+
+        review.restore();
+        Review restoredReview = reviewRepository.save(review);
+        log.info("Review {} restored successfully", reviewId);
+
+        return reviewMapper.toDto(restoredReview);
+    }
+
+    // ==================== Query Operations ====================
+
     @Override
     @Transactional(readOnly = true)
     public Page<ReviewResponse> getProductReviews(Long productId, Pageable pageable) {
-        List<Review> reviews = reviewRepository.findByProductIdAndApprovedTrue(productId, pageable.getPageNumber(), pageable.getPageSize());
-        long total = reviewRepository.countByProductIdAndApprovedTrue(productId);
-        return new PageImpl<>(reviews.stream().map(reviewMapper::toDto).toList(), pageable, total);
+        log.debug("Fetching reviews for product {}", productId);
+
+        // Verify product exists
+        if (!productRepository.existsById(productId)) {
+            throw ResourceNotFoundException.forResource("Product id", productId);
+        }
+
+        Page<Review> reviews = reviewRepository.findByProductIdAndApproved(productId, true, pageable);
+        return reviews.map(reviewMapper::toDto);
     }
 
-    /**
-     * Get reviews by user
-     */
+    @Override
+    @Transactional(readOnly = true)
+    public Page<ReviewResponse> getProductReviewsWithFilters(Long productId, ReviewFilterRequest filters, Pageable pageable) {
+        log.debug("Fetching filtered reviews for product {}", productId);
+
+        Page<Review> reviews = reviewRepository.findByFilters(
+                productId,
+                filters.getRating(),
+                filters.getVerifiedPurchase(),
+                filters.getApproved(),
+                filters.getWithImages(),
+                filters.getDateFrom(),
+                filters.getDateTo(),
+                pageable
+        );
+
+        return reviews.map(reviewMapper::toDto);
+    }
+
+    @Override
+    @Transactional(readOnly = true)
+    public Page<ReviewResponse> getVerifiedReviews(Long productId, Pageable pageable) {
+        Page<Review> reviews = reviewRepository.findByProductIdAndVerifiedPurchase(productId, true, pageable);
+        return reviews.map(reviewMapper::toDto);
+    }
+
     @Override
     @Transactional(readOnly = true)
     public Page<ReviewResponse> getUserReviews(Long userId, Pageable pageable) {
-        List<Review> reviews = reviewRepository.findByUserId(userId, pageable.getPageNumber(), pageable.getPageSize());
-        long total = reviewRepository.count(); // Note: should be countByUserId, but method not available
-        return new PageImpl<>(reviews.stream().map(reviewMapper::toDto).toList(), pageable, total);
+        log.debug("Fetching reviews for user {}", userId);
+
+        if (!userRepository.existsById(userId)) {
+            throw ResourceNotFoundException.forResource("User id", userId);
+        }
+
+        Page<Review> reviews = reviewRepository.findByUserId(userId, pageable);
+        return reviews.map(reviewMapper::toDto);
     }
 
-    /**
-     * Get product rating statistics
-     */
     @Override
     @Transactional(readOnly = true)
-    public ProductRatingStats getProductRatingStats(Long productId) {
-        Double avgRating = reviewRepository.getAverageRatingByProductId(productId);
-        Long totalReviews = reviewRepository.countByProductIdAndApprovedTrue(productId);
-        Map<Integer, Long> ratingMap = reviewRepository.getRatingDistribution(productId);
+    public Page<ReviewResponse> getReviewsByRating(Long productId, Integer rating, Pageable pageable) {
+        if (rating < 1 || rating > 5) {
+            throw new InvalidDataException("Rating must be between 1 and 5");
+        }
 
-        return ProductRatingStats.builder()
-                .productId(productId)
-                .averageRating(avgRating != null ? avgRating : 0.0)
+        Page<Review> reviews = reviewRepository.findByProductIdAndRating(productId, rating, pageable);
+        return reviews.map(reviewMapper::toDto);
+    }
+
+    @Override
+    @Transactional(readOnly = true)
+    public List<ReviewResponse> getMostHelpfulReviews(Long productId, int limit) {
+        List<Review> reviews = reviewRepository.findMostHelpfulReviews(productId, limit);
+        return reviews.stream()
+                .map(reviewMapper::toDto)
+                .collect(Collectors.toList());
+    }
+
+    @Override
+    @Transactional(readOnly = true)
+    public List<ReviewResponse> getRecentReviews(Long productId, int limit) {
+        List<Review> reviews = reviewRepository.findRecentReviews(productId, limit);
+        return reviews.stream()
+                .map(reviewMapper::toDto)
+                .collect(Collectors.toList());
+    }
+
+    @Override
+    @Transactional(readOnly = true)
+    public Page<ReviewResponse> getReviewsWithImages(Long productId, Pageable pageable) {
+        Page<Review> reviews = reviewRepository.findReviewsWithImages(productId, pageable);
+        return reviews.map(reviewMapper::toDto);
+    }
+
+    @Override
+    @Transactional(readOnly = true)
+    public Page<ReviewResponse> searchReviews(Long productId, String keyword, Pageable pageable) {
+        if (keyword == null || keyword.trim().isEmpty()) {
+            return getProductReviews(productId, pageable);
+        }
+
+        Page<Review> reviews = reviewRepository.searchReviewsByProduct(productId, keyword.trim(), pageable);
+        return reviews.map(reviewMapper::toDto);
+    }
+
+    // ==================== Statistics & Analytics ====================
+
+    @Override
+    @Transactional(readOnly = true)
+    public ReviewSummaryResponse getProductRatingStats(Long productId) {
+        log.debug("Fetching rating statistics for product {}", productId);
+
+        Map<String, Object> stats = reviewRepository.getProductRatingStats(productId);
+        Map<Integer, Map<String, Object>> distribution = reviewRepository.getRatingDistributionWithPercentages(productId);
+        List<Map<String, Object>> topPros = reviewRepository.getMostCommonPros(productId, 5);
+        List<Map<String, Object>> topCons = reviewRepository.getMostCommonCons(productId, 5);
+
+        Double avgRating = (Double) stats.get("averageRating");
+        Long totalReviews = (Long) stats.get("totalReviews");
+        Long verifiedPurchases = (Long) stats.get("verifiedPurchases");
+        Double verifiedPercentage = (Double) stats.get("verifiedPercentage");
+
+        return ReviewSummaryResponse.builder()
                 .totalReviews(totalReviews)
-                .distribution(ProductRatingStats.RatingDistribution.builder()
-                        .fiveStars(ratingMap.getOrDefault(5, 0L))
-                        .fourStars(ratingMap.getOrDefault(4, 0L))
-                        .threeStars(ratingMap.getOrDefault(3, 0L))
-                        .twoStars(ratingMap.getOrDefault(2, 0L))
-                        .oneStar(ratingMap.getOrDefault(1, 0L))
-                        .build())
+                .averageRating(avgRating)
+                .verifiedPurchases(verifiedPurchases)
+                .verifiedPurchasePercentage(verifiedPercentage)
+                .distribution(buildRatingDistribution(distribution))
+                .topPros(topPros.stream()
+                        .map(m -> (String) m.get("text"))
+                        .collect(Collectors.toList()))
+                .topCons(topCons.stream()
+                        .map(m -> (String) m.get("text"))
+                        .collect(Collectors.toList()))
                 .build();
     }
 
-    /**
-     * Mark review as helpful
-     */
+    private ReviewSummaryResponse.RatingDistribution buildRatingDistribution(Map<Integer, Map<String, Object>> distribution) {
+        return ReviewSummaryResponse.RatingDistribution.builder()
+                .fiveStars((Long) distribution.getOrDefault(5, Map.of("count", 0L)).get("count"))
+                .fiveStarsPercentage((Double) distribution.getOrDefault(5, Map.of("percentage", 0.0)).get("percentage"))
+                .fourStars((Long) distribution.getOrDefault(4, Map.of("count", 0L)).get("count"))
+                .fourStarsPercentage((Double) distribution.getOrDefault(4, Map.of("percentage", 0.0)).get("percentage"))
+                .threeStars((Long) distribution.getOrDefault(3, Map.of("count", 0L)).get("count"))
+                .threeStarsPercentage((Double) distribution.getOrDefault(3, Map.of("percentage", 0.0)).get("percentage"))
+                .twoStars((Long) distribution.getOrDefault(2, Map.of("count", 0L)).get("count"))
+                .twoStarsPercentage((Double) distribution.getOrDefault(2, Map.of("percentage", 0.0)).get("percentage"))
+                .oneStar((Long) distribution.getOrDefault(1, Map.of("count", 0L)).get("count"))
+                .oneStarPercentage((Double) distribution.getOrDefault(1, Map.of("percentage", 0.0)).get("percentage"))
+                .build();
+    }
+
+    @Override
+    @Transactional(readOnly = true)
+    public Map<String, Object> getUserReviewStats(Long userId) {
+        return reviewRepository.getUserReviewStats(userId);
+    }
+
+    @Override
+    @Transactional(readOnly = true)
+    public Map<Integer, Map<String, Object>> getRatingDistribution(Long productId) {
+        return reviewRepository.getRatingDistributionWithPercentages(productId);
+    }
+
+    @Override
+    @Transactional(readOnly = true)
+    public List<Map<String, Object>> getReviewTrends(Long productId, int months) {
+        return reviewRepository.getReviewTrendsOverTime(productId, months);
+    }
+
+    @Override
+    @Transactional(readOnly = true)
+    public List<Map<String, Object>> getMostCommonPros(Long productId, int limit) {
+        return reviewRepository.getMostCommonPros(productId, limit);
+    }
+
+    @Override
+    @Transactional(readOnly = true)
+    public List<Map<String, Object>> getMostCommonCons(Long productId, int limit) {
+        return reviewRepository.getMostCommonCons(productId, limit);
+    }
+
+    @Override
+    @Transactional(readOnly = true)
+    public List<Map<String, Object>> getTopRatedProducts(int limit) {
+        return reviewRepository.getTopRatedProducts(limit);
+    }
+
+    @Override
+    @Transactional(readOnly = true)
+    public List<Map<String, Object>> getMostReviewedProducts(int limit) {
+        return reviewRepository.getMostReviewedProducts(limit);
+    }
+
+    // ==================== Voting Operations ====================
+
     @Override
     public void markHelpful(Long reviewId) {
         Review review = reviewRepository.findById(reviewId)
-                .orElseThrow(() -> ResourceNotFoundException.forResource("Review", reviewId));
+                .orElseThrow(() -> ResourceNotFoundException.forResource("Review id", reviewId));
+
         review.incrementHelpful();
         reviewRepository.save(review);
+        log.debug("Review {} marked as helpful", reviewId);
     }
 
-    /**
-     * Mark review as not helpful
-     */
     @Override
     public void markNotHelpful(Long reviewId) {
         Review review = reviewRepository.findById(reviewId)
-                .orElseThrow(() -> ResourceNotFoundException.forResource("Review", reviewId));
+                .orElseThrow(() -> ResourceNotFoundException.forResource("Review id", reviewId));
+
         review.incrementNotHelpful();
         reviewRepository.save(review);
+        log.debug("Review {} marked as not helpful", reviewId);
     }
 
-    /**
-     * Approve review (Admin)
-     */
+    // ==================== Admin Operations ====================
+
     @Override
     public ReviewResponse approveReview(Long reviewId) {
+        log.info("Approving review {}", reviewId);
+
         Review review = reviewRepository.findById(reviewId)
-                .orElseThrow(() -> ResourceNotFoundException.forResource("Review", reviewId));
-        review.setApproved(true);
-        return reviewMapper.toDto(reviewRepository.save(review));
+                .orElseThrow(() -> ResourceNotFoundException.forResource("Review id", reviewId));
+
+        review.approve();
+        Review approvedReview = reviewRepository.save(review);
+
+        return reviewMapper.toDto(approvedReview);
+    }
+
+    @Override
+    public ReviewResponse rejectReview(Long reviewId, String reason) {
+        log.info("Rejecting review {} with reason: {}", reviewId, reason);
+
+        Review review = reviewRepository.findById(reviewId)
+                .orElseThrow(() -> ResourceNotFoundException.forResource("Review id", reviewId));
+
+        review.reject(reason);
+        Review rejectedReview = reviewRepository.save(review);
+
+        return reviewMapper.toDto(rejectedReview);
+    }
+
+
+
+    @Override
+    public ReviewResponse addAdminResponse(Long reviewId, AdminResponseRequest request, Long adminId) {
+        log.info("Adding admin response to review {}", reviewId);
+
+        Review review = reviewRepository.findById(reviewId)
+                .orElseThrow(() ->  ResourceNotFoundException.forResource("Review id", reviewId));
+
+        review.addAdminResponse(request.getResponse(), adminId);
+        Review updatedReview = reviewRepository.save(review);
+
+        return reviewMapper.toDto(updatedReview);
+    }
+
+    @Override
+    public ReviewResponse removeAdminResponse(Long reviewId) {
+        log.info("Removing admin response from review {}", reviewId);
+
+        Review review = reviewRepository.findById(reviewId)
+                .orElseThrow(() -> ResourceNotFoundException.forResource("Review id", reviewId));
+
+        review.setAdminResponse(null);
+        review.setAdminResponseAt(null);
+        review.setAdminResponseBy(null);
+        Review updatedReview = reviewRepository.save(review);
+
+        return reviewMapper.toDto(updatedReview);
+    }
+
+    @Override
+    @Transactional(readOnly = true)
+    public Page<ReviewResponse> getPendingReviews(Pageable pageable) {
+        Page<Review> reviews = reviewRepository.findPendingReviews(pageable);
+        return reviews.map(reviewMapper::toDto);
+    }
+
+    @Override
+    @Transactional(readOnly = true)
+    public Page<ReviewResponse> getFlaggedReviews(Pageable pageable) {
+        Page<Review> reviews = reviewRepository.getFlaggedReviews(pageable);
+        return reviews.map(reviewMapper::toDto);
+    }
+
+    @Override
+    public int bulkApproveReviews(List<Long> reviewIds) {
+        log.info("Bulk approving {} reviews", reviewIds.size());
+        return reviewRepository.approveReviews(reviewIds);
+    }
+
+    @Override
+    public int bulkRejectReviews(List<Long> reviewIds, String reason) {
+        log.info("Bulk rejecting {} reviews", reviewIds.size());
+        return reviewRepository.rejectReviews(reviewIds, reason);
+    }
+
+    // ==================== Utility Operations ====================
+
+    @Override
+    @Transactional(readOnly = true)
+    public boolean canUserReviewProduct(Long productId, Long userId) {
+        // User can review if they haven't already reviewed AND they've purchased it
+        boolean hasReviewed = reviewRepository.existsByProductIdAndUserId(productId, userId);
+        boolean hasPurchased = orderRepository.existsByUserIdAndProductId(userId, productId);
+        return !hasReviewed && hasPurchased;
+    }
+
+    @Override
+    public int updateVerificationStatusFromOrders(Long productId) {
+        log.info("Updating verification status for product {}", productId);
+        return reviewRepository.updateVerificationStatusFromOrders(productId);
+    }
+
+    @Override
+    @Transactional(readOnly = true)
+    public boolean hasUserPurchasedProduct(Long productId, Long userId) {
+        return orderRepository.existsByUserIdAndProductId(userId, productId);
     }
 }

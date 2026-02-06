@@ -12,6 +12,7 @@ import com.smart_ecomernce_api.smart_ecomernce_api.modules.product.dto.ProductRe
 import com.smart_ecomernce_api.smart_ecomernce_api.modules.product.dto.ProductUpdateRequest;
 import com.smart_ecomernce_api.smart_ecomernce_api.modules.product.entity.InventoryStatus;
 import com.smart_ecomernce_api.smart_ecomernce_api.modules.product.entity.Product;
+import com.smart_ecomernce_api.smart_ecomernce_api.modules.product.entity.ProductImage;
 import com.smart_ecomernce_api.smart_ecomernce_api.modules.product.mapper.ProductMapper;
 import com.smart_ecomernce_api.smart_ecomernce_api.modules.product.repository.ProductRepository;
 import com.smart_ecomernce_api.smart_ecomernce_api.modules.product.service.ProductService;
@@ -78,6 +79,17 @@ public class ProductServiceImpl implements ProductService {
         productMapper.update(request, product);
         product.setCategory(category);
 
+        if (request.getImageUrls() != null && !request.getImageUrls().isEmpty()) {
+            product.getImages().clear();
+            request.getImageUrls().forEach(url -> {
+                ProductImage productImage = ProductImage.builder()
+                        .imageUrl(url)
+                        .product(product)
+                        .build();
+                product.addImage(productImage);
+            });
+        }
+
         Product updatedProduct = productRepository.save(product);
         log.info("Product updated with id: {}", id);
         return productMapper.toDto(updatedProduct);
@@ -107,6 +119,19 @@ public class ProductServiceImpl implements ProductService {
 
     @Override
     @Transactional(readOnly = true)
+    public Page<ProductResponse> getProductsByCategoryName(String categoryName, Pageable pageable) {
+        if (categoryName == null || categoryName.trim().isEmpty()) {
+            throw new InvalidDataException("Category name must not be blank");
+        }
+
+        Category category = categoryRepository.findByNameIgnoreCase(categoryName.trim())
+                .orElseThrow(() -> ResourceNotFoundException.forResource("Category", categoryName.trim()));
+
+        return getProductsByCategory(category.getId(), pageable);
+    }
+
+    @Override
+    @Transactional(readOnly = true)
     public Page<ProductResponse> getProductsByPriceRange(BigDecimal minPrice, BigDecimal maxPrice, Pageable pageable) {
         return productRepository.findByPriceRange(minPrice, maxPrice, pageable).map(productMapper::toDto);
     }
@@ -127,9 +152,10 @@ public class ProductServiceImpl implements ProductService {
     @Override
     @Transactional
     public void deleteProduct(Long id) {
-        Product product = productRepository.findById(id)
+        productRepository.findById(id)
                 .orElseThrow(() -> ResourceNotFoundException.forResource("Product", id));
-        productRepository.delete(product);
+
+        productRepository.deleteById(id);
         log.info("Product deleted with id: {}", id);
     }
 
@@ -158,6 +184,7 @@ public class ProductServiceImpl implements ProductService {
     public ProductResponse getProductBySlug(String slug) {
         log.info("Fetching product by slug: {}", slug);
         Product product = productRepository.findBySlug(slug)
+                .filter(p -> Boolean.TRUE.equals(p.getIsActive()))
                 .orElseThrow(() -> ResourceNotFoundException.forResource("Product Slug", slug));
         return productMapper.toDto(product);
     }
@@ -244,8 +271,6 @@ public class ProductServiceImpl implements ProductService {
      * Get low stock product
      */
     @Transactional(readOnly = true)
-    @Cacheable(value = "low-stock-product")
-    @Override
     public List<Product> getLowStockProducts() {
         return productRepository.findLowStockProducts();
     }
@@ -254,10 +279,9 @@ public class ProductServiceImpl implements ProductService {
      * Get product needing reorder
      */
     @Transactional(readOnly = true)
-    @Cacheable(value = "product-needing-reorder")
     @Override
-    public List<Product> getProductsNeedingReorder() {
-        return productRepository.findProductsNeedingReorder();
+    public Page<ProductResponse> getProductsNeedingReorder(Pageable pageable) {
+        return productRepository.findProductsNeedingReorder(pageable).map(productMapper::toDto);
     }
 
     /**
@@ -265,16 +289,15 @@ public class ProductServiceImpl implements ProductService {
      */
     @Override
     @Transactional(readOnly = true)
-    @Cacheable(value = "product-by-inventory-status", key = "#status")
-    public List<Product> findByInventoryStatus(InventoryStatus status) {
+    @Cacheable(value = "product-by-inventory-status", key = "#status + '-' + #pageable.pageNumber + '-' + #pageable.pageSize + '-' + #pageable.sort.toString()")
+    public Page<ProductResponse> findByInventoryStatus(InventoryStatus status, Pageable pageable) {
         log.info("Finding product by inventory status: {}", status);
-        return productRepository.findByInventoryStatus(status);
+        return productRepository.findByInventoryStatus(status, pageable).map(productMapper::toDto);
     }
 
 
     @Override
     @Transactional
-    @CacheEvict(value = "product", allEntries = true)
     public void restoreStock(Long productId, Integer quantity) {
         Product product = productRepository.findById(productId)
                 .orElseThrow(() -> new ResourceNotFoundException("Product not found with id: " + productId));

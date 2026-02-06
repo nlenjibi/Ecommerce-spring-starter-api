@@ -2,29 +2,123 @@ package com.smart_ecomernce_api.smart_ecomernce_api.modules.review.service;
 
 
 
-import com.smart_ecomernce_api.smart_ecomernce_api.modules.review.dto.ReviewCreateRequest;
-import com.smart_ecomernce_api.smart_ecomernce_api.modules.review.dto.ReviewResponse;
-import com.smart_ecomernce_api.smart_ecomernce_api.modules.review.dto.ReviewUpdateRequest;
+import com.smart_ecomernce_api.smart_ecomernce_api.modules.review.dto.*;
 import com.smart_ecomernce_api.smart_ecomernce_api.modules.review.entity.ProductRatingStats;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 
 
+import java.util.List;
+import java.util.Map;
+
+/**
+ * Service interface for review operations
+ * Provides business logic for managing product reviews
+ */
 public interface ReviewService {
 
+    // ==================== Basic CRUD Operations ====================
 
-    public ReviewResponse createReview(ReviewCreateRequest request, Long userId) ;
-    public ReviewResponse updateReview(Long reviewId, ReviewUpdateRequest request, Long userId);
-    public void deleteReview(Long reviewId, Long userId);
-    public Page<ReviewResponse> getProductReviews(Long productId, Pageable pageable) ;
+    ReviewResponse createReview(ReviewCreateRequest request, Long userId);
 
-    public Page<ReviewResponse> getUserReviews(Long userId, Pageable pageable) ;
+    ReviewResponse updateReview(Long reviewId, ReviewUpdateRequest request, Long userId);
 
-    public ProductRatingStats getProductRatingStats(Long productId) ;
+    void deleteReview(Long reviewId, Long userId);
 
-    public void markHelpful(Long reviewId) ;
+    ReviewResponse getReview(Long reviewId);
 
-    public void markNotHelpful(Long reviewId) ;
 
-    public ReviewResponse approveReview(Long reviewId);
+    ReviewResponse restoreReview(Long reviewId, Long userId);
+
+    // ==================== Query Operations ====================
+
+
+    Page<ReviewResponse> getProductReviews(Long productId, Pageable pageable);
+
+
+    Page<ReviewResponse> getProductReviewsWithFilters(Long productId, ReviewFilterRequest filters, Pageable pageable);
+
+    Page<ReviewResponse> getVerifiedReviews(Long productId, Pageable pageable);
+
+
+    Page<ReviewResponse> getUserReviews(Long userId, Pageable pageable);
+
+
+    Page<ReviewResponse> getReviewsByRating(Long productId, Integer rating, Pageable pageable);
+
+
+    List<ReviewResponse> getMostHelpfulReviews(Long productId, int limit);
+
+
+    List<ReviewResponse> getRecentReviews(Long productId, int limit);
+
+    Page<ReviewResponse> getReviewsWithImages(Long productId, Pageable pageable);
+
+
+    Page<ReviewResponse> searchReviews(Long productId, String keyword, Pageable pageable);
+
+    // ==================== Statistics & Analytics ====================
+
+    ReviewSummaryResponse getProductRatingStats(Long productId);
+
+
+    Map<String, Object> getUserReviewStats(Long userId);
+
+
+    Map<Integer, Map<String, Object>> getRatingDistribution(Long productId);
+
+
+    List<Map<String, Object>> getReviewTrends(Long productId, int months);
+
+
+    List<Map<String, Object>> getMostCommonPros(Long productId, int limit);
+
+
+    List<Map<String, Object>> getMostCommonCons(Long productId, int limit);
+
+    List<Map<String, Object>> getTopRatedProducts(int limit);
+
+
+    List<Map<String, Object>> getMostReviewedProducts(int limit);
+
+
+
+    void markHelpful(Long reviewId);
+
+
+    void markNotHelpful(Long reviewId);
+
+    // ==================== Admin Operations ====================
+
+
+    ReviewResponse approveReview(Long reviewId);
+
+    ReviewResponse rejectReview(Long reviewId, String reason);
+
+
+    ReviewResponse addAdminResponse(Long reviewId, AdminResponseRequest request, Long adminId);
+
+
+    ReviewResponse removeAdminResponse(Long reviewId);
+
+    Page<ReviewResponse> getPendingReviews(Pageable pageable);
+
+
+    Page<ReviewResponse> getFlaggedReviews(Pageable pageable);
+
+
+    int bulkApproveReviews(List<Long> reviewIds);
+
+
+    int bulkRejectReviews(List<Long> reviewIds, String reason);
+
+    // ==================== Utility Operations ====================
+
+
+    boolean canUserReviewProduct(Long productId, Long userId);
+
+
+    int updateVerificationStatusFromOrders(Long productId);
+
+    boolean hasUserPurchasedProduct(Long productId, Long userId);
 }

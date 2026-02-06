@@ -26,6 +26,9 @@ public interface CartMapper {
     @Mapping(target = "discount", source = "discountAmount")
     @Mapping(target = "totalPrice", expression = "java(cart.getFinalPrice())")
     @Mapping(target = "status", expression = "java(cart.getStatus().name())")
+    @Mapping(target = "dateCreated", source = "createdAt")
+    @Mapping(target = "updatedAt", source = "updatedAt")
+    @Mapping(target = "couponCode", source = "couponCode")
     @Mapping(target = "items", source = "items")  // FIXED: Map items correctly
     CartDto toDto(Cart cart);
 

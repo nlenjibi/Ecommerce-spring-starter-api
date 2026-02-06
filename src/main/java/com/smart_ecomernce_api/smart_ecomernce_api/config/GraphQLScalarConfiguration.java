@@ -32,6 +32,7 @@ public class GraphQLScalarConfiguration {
                 .scalar(dateTimeScalar())
                 .scalar(ExtendedScalars.GraphQLBigDecimal)
                 .scalar(ExtendedScalars.UUID)
+                .scalar(ExtendedScalars.GraphQLLong)
                 .scalar(uploadScalar());
     }
 

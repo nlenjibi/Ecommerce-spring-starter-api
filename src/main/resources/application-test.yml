@@ -10,7 +10,7 @@ spring:
 
   jpa:
     hibernate:
-      ddl-auto: update  # Only validate schema, don't auto-create
+      ddl-auto: update  # Drop and recreate tables on startup
     show-sql: true
     open-in-view: false
     properties:
@@ -69,3 +69,6 @@ springdoc:
     try-it-out-enabled: true
     operations-sorter: method
     tags-sorter: alpha
+
+cart:
+  auto-cleanup-enabled: false

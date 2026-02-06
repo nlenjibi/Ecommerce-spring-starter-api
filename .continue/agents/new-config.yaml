@@ -1,0 +1,16 @@
+# This is an example configuration file
+# To learn more, see the full config.yaml reference: https://docs.continue.dev/reference
+
+name: Big Pickle
+version: 1.0.0
+schema: v1
+
+# Define which models can be used
+# https://docs.continue.dev/customization/models
+models:
+  - name: Big Pickle
+    provider: opencode
+    model: opencode/big-pickle
+    apiBase: http://localhost:8000/
+    apiKey: sk-6NGzgZQlPp3tsW0IJkBFkzZ5L65i4WOI24bgl5cC3mglCZSPBxVHf5mMUFOUzxom
+

@@ -16,7 +16,7 @@ import java.util.UUID;
 @NoArgsConstructor
 @AllArgsConstructor
 public class CartDto {
-    private UUID id;
+    private Long id;
     private LocalDateTime dateCreated;
     private LocalDateTime updatedAt;
     private String status;

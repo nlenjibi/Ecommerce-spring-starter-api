@@ -43,7 +43,6 @@ public class OrderServiceImpl implements OrderService {
     private final OrderMapper orderMapper;
 
     @Override
-    @CacheEvict(value = "orders", allEntries = true)
     public OrderResponse createOrder(OrderCreateRequest request, Long userId) {
         log.info("Creating order for user {}", userId);
 
@@ -117,7 +116,6 @@ public class OrderServiceImpl implements OrderService {
     }
 
     @Override
-    @Cacheable(value = "orders", key = "#id + '_' + #userId")
     @Transactional(readOnly = true)
     public OrderResponse getOrderById(Long id, Long userId) {
         Order order = orderRepository.findById(id)
@@ -132,7 +130,6 @@ public class OrderServiceImpl implements OrderService {
     }
 
     @Override
-    @Cacheable(value = "orders", key = "#orderNumber + '_' + #userId")
     @Transactional(readOnly = true)
     public OrderResponse getOrderByOrderNumber(String orderNumber, Long userId) {
         Order order = orderRepository.findByOrderNumber(orderNumber)
@@ -147,7 +144,6 @@ public class OrderServiceImpl implements OrderService {
     }
 
     @Override
-    @Cacheable(value = "orders", key = "'user_' + #userId + '_' + #pageable.pageNumber + '_' + #pageable.pageSize")
     @Transactional(readOnly = true)
     public Page<OrderResponse> getUserOrders(Long userId, Pageable pageable) {
         List<Order> orders = orderRepository.findByUserId(userId, pageable.getPageNumber(), pageable.getPageSize());
@@ -156,7 +152,6 @@ public class OrderServiceImpl implements OrderService {
     }
 
     @Override
-    @Cacheable(value = "orders", key = "'user_status_' + #userId + '_' + #status + '_' + #pageable.pageNumber + '_' + #pageable.pageSize")
     @Transactional(readOnly = true)
     public Page<OrderResponse> getUserOrdersByStatus(
             Long userId,
@@ -169,7 +164,6 @@ public class OrderServiceImpl implements OrderService {
     }
 
     @Override
-    @Cacheable(value = "orders", key = "'all_' + #pageable.pageNumber + '_' + #pageable.pageSize")
     @Transactional(readOnly = true)
     public Page<OrderResponse> getAllOrders(Pageable pageable) {
         List<Order> orders = orderRepository.findAll(pageable.getPageNumber(), pageable.getPageSize());
@@ -178,7 +172,6 @@ public class OrderServiceImpl implements OrderService {
     }
 
     @Override
-    @Cacheable(value = "orders", key = "'status_' + #status + '_' + #pageable.pageNumber + '_' + #pageable.pageSize")
     @Transactional(readOnly = true)
     public Page<OrderResponse> getOrdersByStatus(OrderStatus status, Pageable pageable) {
         List<Order> orders = orderRepository.findByStatus(status, pageable.getPageNumber(), pageable.getPageSize());
@@ -187,40 +180,46 @@ public class OrderServiceImpl implements OrderService {
     }
 
     @Override
+    @Transactional
+    @CacheEvict(value = "orders", key = "#id")
     public OrderResponse updateOrderStatus(Long id, OrderUpdateRequest request) {
-        // Invalidate order caches since status changes
-        // Cache eviction will be performed by the caller flow via annotations when appropriate
         Order order = orderRepository.findById(id)
                 .orElseThrow(() -> ResourceNotFoundException.forResource("Order", id));
 
-        if (request.getStatus() != null) {
-            updateStatus(order, request.getStatus());
+        if (request.getStatus() != null && order.getStatus() != request.getStatus()) {
+            orderRepository.updateStatus(id, request.getStatus());
+            log.info("Order {} status updated to {}", order.getOrderNumber(), request.getStatus());
         }
 
         if (request.getTrackingNumber() != null) {
             order.setPaymentTransactionId(request.getTrackingNumber());
+            orderRepository.update(order);
         }
 
-        Order updated = orderRepository.save(order);
-        return orderMapper.toDto(updated);
+        return orderRepository.findById(id).map(orderMapper::toDto)
+                .orElseThrow(() -> ResourceNotFoundException.forResource("Order", id));
     }
 
     @Override
+    @Transactional
+    @CacheEvict(value = "orders", key = "#orderId")
     public OrderResponse updatePaymentStatus(Long orderId, String statusStr) {
-        Order order = orderRepository.findById(orderId)
-                .orElseThrow(() -> ResourceNotFoundException.forResource("user", orderId));
+        orderRepository.findById(orderId)
+                .orElseThrow(() -> ResourceNotFoundException.forResource("Order", orderId));
 
         try {
             PaymentStatus status = PaymentStatus.valueOf(statusStr.toUpperCase());
-            order.setPaymentStatus(status);
+            orderRepository.updatePaymentStatus(orderId, status);
 
             if (status == PaymentStatus.PAID) {
+                Order order = orderRepository.findById(orderId).get();
                 order.markAsPaid(generateTransactionId());
+                orderRepository.update(order);
             }
 
-            Order updated = orderRepository.save(order);
             log.info("Payment status updated for order {}: {}", orderId, status);
-            return orderMapper.toDto(updated);
+            return orderRepository.findById(orderId).map(orderMapper::toDto)
+                    .orElseThrow(() -> ResourceNotFoundException.forResource("Order", orderId));
 
         } catch (IllegalArgumentException e) {
             throw new IllegalArgumentException("Invalid payment status: " + statusStr);
@@ -228,7 +227,7 @@ public class OrderServiceImpl implements OrderService {
     }
 
     @Override
-    @CacheEvict(value = "orders", allEntries = true)
+    @Transactional
     public OrderResponse confirmOrder(Long id) {
         Order order = orderRepository.findById(id)
                 .orElseThrow(() -> ResourceNotFoundException.forResource("Order", id));
@@ -241,7 +240,7 @@ public class OrderServiceImpl implements OrderService {
     }
 
     @Override
-    @CacheEvict(value = "orders", allEntries = true)
+    @Transactional
     public OrderResponse shipOrder(Long id, String trackingNumber, String carrier) {
         Order order = orderRepository.findById(id)
                 .orElseThrow(() -> ResourceNotFoundException.forResource("user", id));
@@ -261,7 +260,7 @@ public class OrderServiceImpl implements OrderService {
     }
 
     @Override
-    @CacheEvict(value = "orders", allEntries = true)
+    @Transactional
     public OrderResponse deliverOrder(Long id) {
         Order order = orderRepository.findById(id)
                 .orElseThrow(() -> ResourceNotFoundException.forResource("user", id));
@@ -275,7 +274,7 @@ public class OrderServiceImpl implements OrderService {
     }
 
     @Override
-    @CacheEvict(value = "orders", allEntries = true)
+    @Transactional
     public OrderResponse cancelOrder(Long id, String reason, Long userId) {
         Order order = orderRepository.findById(id)
                 .orElseThrow(() -> ResourceNotFoundException.forResource("user", id));
@@ -302,7 +301,7 @@ public class OrderServiceImpl implements OrderService {
     }
 
     @Override
-    @CacheEvict(value = "orders", allEntries = true)
+    @Transactional
     public OrderResponse refundOrder(Long id, BigDecimal amount, String reason) {
         Order order = orderRepository.findById(id)
                 .orElseThrow(() -> ResourceNotFoundException.forResource("user", id));
@@ -319,44 +318,73 @@ public class OrderServiceImpl implements OrderService {
     }
 
     @Override
-    @Cacheable(value = "orders", key = "'stats'")
     @Transactional(readOnly = true)
     public OrderStatsResponse getOrderStatistics() {
-        LocalDateTime now = LocalDateTime.now();
-        LocalDateTime monthStart = now.withDayOfMonth(1).withHour(0).withMinute(0).withSecond(0);
-
-        return OrderStatsResponse.builder()
-                .totalOrders(orderRepository.count())
-                .pendingOrders(orderRepository.countByStatus(OrderStatus.PENDING))
-                .confirmedOrders(orderRepository.countByStatus(OrderStatus.CONFIRMED))
-                .processingOrders(orderRepository.countByStatus(OrderStatus.PROCESSING))
-                .shippedOrders(orderRepository.countByStatus(OrderStatus.SHIPPED))
-                .deliveredOrders(orderRepository.countByStatus(OrderStatus.DELIVERED))
-                .cancelledOrders(orderRepository.countByStatus(OrderStatus.CANCELLED))
-                .totalRevenue(calculateRevenue())
-                .monthlyRevenue(orderRepository.calculateRevenue(monthStart, now))
-                .build();
+        return orderRepository.getOrderStatistics();
     }
 
-    // Helper methods
+    @Override
+    public void deleteOrder(Long orderId) {
+        log.info("Deleting order with ID: {}", orderId);
+        orderRepository.findById(orderId)
+                .orElseThrow(() -> ResourceNotFoundException.forResource("Order", orderId));
+        orderRepository.deleteById(orderId);
+        log.info("Order with ID: {} deleted successfully", orderId);
+    }
+
+    @Override
+    public OrderResponse getOrderByIdAsAdmin(Long id) {
+        Order order = findOrderById(id);
+        return orderMapper.toDto(order);
+    }
+
+    @Override
+    public OrderResponse updateOrderAsCustomer(Long id, OrderUpdateRequest request, Long userId) {
+        Order order = orderRepository.findById(id)
+                .orElseThrow(() -> ResourceNotFoundException.forResource("Order", id));
+
+        // Check if order is PENDING
+        if (order.getStatus() != OrderStatus.PENDING) {
+            throw new IllegalStateException("Order can only be updated when status is PENDING");
+        }
+
+        // Check if the order belongs to the provided userId
+        if (!order.getUser().getId().equals(userId)) {
+            throw new SecurityException("You are not authorized to update this order");
+        }
+
+        // Update allowed fields (example: status, trackingNumber, carrier, adminNotes)
+        if (request.getStatus() != null) {
+            order.setStatus(request.getStatus());
+        }
+        if (request.getTrackingNumber() != null) {
+            order.setPaymentTransactionId(request.getTrackingNumber());
+        }
+        if (request.getCarrier() != null) {
+            order.setCarrier(request.getCarrier());
+        }
+
+        // Add more allowed fields as needed
+
+        orderRepository.update(order);
+        log.info("Customer updated order {} while status is PENDING", order.getOrderNumber());
+        return orderMapper.toDto(order);
+    }
+
+
+    private Order findOrderById(Long id) {
+        return orderRepository.findById(id)
+                .orElseThrow(() -> ResourceNotFoundException.forResource("Order", id));
+    }
+
     private void updateStatus(Order order, OrderStatus newStatus) {
-        switch (newStatus) {
-            case CONFIRMED -> order.confirm();
-            case PROCESSING -> order.process();
-            case SHIPPED -> order.ship();
-            case OUT_FOR_DELIVERY -> order.outForDelivery();
-            case DELIVERED -> order.deliver();
-            default -> order.setStatus(newStatus);
+        if (order.getStatus() != newStatus) {
+            order.setStatus(newStatus);
+            log.info("Order {} status updated to {}", order.getOrderNumber(), newStatus);
         }
     }
 
-    private BigDecimal calculateRevenue() {
-        BigDecimal revenue = orderRepository.calculateTotalRevenue();
-        return revenue != null ? revenue : BigDecimal.ZERO;
-    }
-
     private String generateTransactionId() {
-        return "TXN-" + System.currentTimeMillis() + "-" +
-                java.util.UUID.randomUUID().toString().substring(0, 8).toUpperCase();
+        return "txn_" + System.currentTimeMillis();
     }
 }
