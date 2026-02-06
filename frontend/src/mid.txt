@@ -1,0 +1,99 @@
+import { NextResponse } from 'next/server';
+import type { NextRequest } from 'next/server';
+
+// Public routes that don't require authentication
+const publicRoutes = [
+  '/',
+  '/products',
+  '/categories',
+  '/about',
+  '/contact',
+  '/faq',
+  '/help',
+  '/shipping',
+  '/returns',
+  '/auth/login',
+  '/auth/register',
+  '/auth/forgot-password',
+];
+
+// Routes that require authentication
+const protectedRoutes = [
+  '/dashboard',
+  '/dashboard/profile',
+  '/dashboard/orders',
+  '/cart',
+  '/checkout',
+  '/wishlist',
+];
+
+// Admin routes that require admin role
+const adminRoutes = [
+  '/admin',
+  '/admin/dashboard',
+  '/admin/products',
+  '/admin/orders',
+  '/admin/users',
+  '/admin/categories',
+];
+
+export function middleware(request: NextRequest) {
+  const { pathname } = request.nextUrl;
+  const token = request.cookies.get('auth_token')?.value;
+
+  // Check if the current route requires authentication
+  const isProtectedRoute = protectedRoutes.some(route => pathname.startsWith(route));
+  const isAdminRoute = adminRoutes.some(route => pathname.startsWith(route));
+  const isPublicRoute = publicRoutes.some(route => pathname.startsWith(route)) || pathname === '/';
+
+  // Allow access to public routes
+  if (isPublicRoute && !isAdminRoute) {
+    return NextResponse.next();
+  }
+
+  // Check for token in both cookies and Authorization header
+  const authHeader = request.headers.get('authorization');
+  const hasToken = token || (authHeader && authHeader.startsWith('Bearer '));
+
+  // Redirect to login if no token and trying to access protected route
+  if (!hasToken && (isProtectedRoute || isAdminRoute)) {
+    const loginUrl = new URL('/auth/login', request.url);
+    loginUrl.searchParams.set('redirectTo', pathname);
+    return NextResponse.redirect(loginUrl);
+  }
+
+  // If accessing admin route, we need to verify the token contains admin role
+  // This is a simplified check - in production, you might want to decode the JWT
+  // and verify the role claim
+  if (isAdminRoute) {
+    // For now, we'll just check if there's a token
+    // In a real implementation, you'd decode the JWT and check the role
+    if (!hasToken) {
+      const loginUrl = new URL('/auth/login', request.url);
+      loginUrl.searchParams.set('redirectTo', pathname);
+      return NextResponse.redirect(loginUrl);
+    }
+  }
+
+  // If user is logged in and trying to access auth pages, redirect to dashboard
+  if (hasToken && pathname.startsWith('/auth')) {
+    const dashboardUrl = new URL('/dashboard', request.url);
+    return NextResponse.redirect(dashboardUrl);
+  }
+
+  return NextResponse.next();
+}
+
+export const config = {
+  matcher: [
+    /*
+     * Match all request paths except for the ones starting with:
+     * - api (API routes)
+     * - _next/static (static files)
+     * - _next/image (image optimization files)
+     * - favicon.ico (favicon file)
+     * - public (public files)
+     */
+    '/((?!api|_next/static|_next/image|favicon.ico|public).*)',
+  ],
+};
